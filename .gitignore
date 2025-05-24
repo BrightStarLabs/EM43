@@ -5,3 +5,5 @@ __pycache__
 
 # data
 dp_checkpoints
+models/*.pkl
+outputs/*.png

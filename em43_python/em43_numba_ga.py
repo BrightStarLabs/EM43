@@ -27,28 +27,29 @@ print(f"Numba using {nb.get_num_threads()} threads")
 
 from em43_numba import _simulate, _sanitize_rule, _sanitize_programme
 
-# ───────────────── Hyper‑parameters ────────────────────────────────
-POP_SIZE      = 20000
-N_GENERATIONS = 300
-ELITE_FRAC    = 0.1
-TOURNEY_K     = 3
+# ───────────────── Hyper-parameters ────────────────────────────────
+POP_SIZE      = 20000    # Number of genomes in the population
+N_GENERATIONS = 300      # Number of generations to run
+ELITE_FRAC    = 0.1      # Fraction of population to keep as elite
+TOURNEY_K     = 3       # Number of genomes to select for tournament
 
-P_MUT_RULE    = 0.03
-P_MUT_PROG    = 0.08
-L_PROG        = 10
+P_MUT_RULE    = 0.03    # Probability of mutating each rule entry
+P_MUT_PROG    = 0.08    # Probability of mutating each program cell
+L_PROG        = 10      # Length of the program sequence
 
-LAMBDA_P      = 0.01
-EPS_RANDOM_IMMIGRANTS = 0.2
-N_COMPLEX_TELEMETRY   = 30
+LAMBDA_P      = 0.01    # Sparsity penalty coefficient
+EPS_RANDOM_IMMIGRANTS = 0.2  # Probability of introducing random immigrants
+N_COMPLEX_TELEMETRY   = 30   # Frequency of detailed telemetry (in generations)
 
-INPUT_SET   = np.arange(1, 31, dtype=np.int64)  # 1..30
-TARGET_OUT  = 4 * INPUT_SET
-WINDOW      = 200
-MAX_STEPS   = 800
-HALT_THRESH = 0.50
+INPUT_SET   = np.arange(1, 31, dtype=np.int64)  # Input range: 1 to 30
+TARGET_OUT  = 4 * INPUT_SET                    # Target output: 4x input
+WINDOW      = 200      # Tape length for simulation
+MAX_STEPS   = 800      # Maximum simulation steps
+HALT_THRESH = 0.50     # Threshold for early stopping
 
-CHECK_EVERY = 50
-SAVE_DIR    = Path("dp_checkpoints"); SAVE_DIR.mkdir(exist_ok=True)
+CHECK_EVERY = 50      # Frequency of checkpoint saving
+SAVE_DIR    = Path("dp_checkpoints")  # Directory for checkpoints
+SAVE_DIR.mkdir(exist_ok=True)
 
 rng = np.random.default_rng()
 
@@ -187,9 +188,9 @@ def run_ga():
     plt.figure(figsize=(6,4))
     plt.plot(best_curve, label="best"); plt.plot(mean_curve, label="mean")
     plt.xlabel("generation"); plt.ylabel("fitness"); plt.legend(); plt.tight_layout()
-    plt.savefig("fitness_curve.png", dpi=150); plt.close()
+    plt.savefig("outputs/fitness_curve.png", dpi=150); plt.close()
 
-    with open("best_genome.pkl", "wb") as f:
+    with open("models/best_genome.pkl", "wb") as f:
         pickle.dump({"rule": pop_rules[0], "prog": pop_progs[0], "fitness": best_curve[-1]}, f)
 
 # ───────────────── Entry point ─────────────────────────────────────
