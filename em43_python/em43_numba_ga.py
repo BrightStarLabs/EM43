@@ -1,14 +1,14 @@
 """
-EM‑4/3 GA – ***fast vectorised edition*** (May 2025)
+EM-4/3 GA - fast vectorised edition (May 2025)
 ===================================================
-* **Numba‑parallel population evaluation** – evaluates the whole
-  population inside a single nopython `prange` loop – no Python calls
-  per genome → **~5‑6× speed‑up** on 8‑core CPU.
-* **Random‑Immigrant Strategy** – unchanged (keeps diversity).
-* **Telemetry** – average Hamming distance every
+- Numba-parallel population evaluation: evaluates the whole
+  population inside a single nopython `prange` loop - no Python calls
+  per genome -> ~5-6 x speed-up on 8-core CPU.
+- Random-Immigrant Strategy: unchanged (keeps diversity).
+- Telemetry: average Hamming distance every
   `N_COMPLEX_TELEMETRY` gens (no plotting).
 
-Drop‑in usage: `python em43_numba_ga.py`
+Drop-in usage: `python em43_numba_ga.py`
 
 Author: Giacomo Bocchese - with the help of ChatGPT
 
@@ -119,6 +119,14 @@ def avg_pairwise_hamming(flat: np.ndarray) -> float:
 # ───────────────── GA main loop ────────────────────────────────────
 
 def run_ga():
+    """
+    Run Genetic Algorithm.
+
+    Returns:
+    --------
+    tuple[np.ndarray, np.ndarray, float]
+        (best_rule, best_prog, best_fitness)
+    """
     # Population arrays
     pop_rules = np.empty((POP_SIZE, 64), np.uint8)
     pop_progs = np.empty((POP_SIZE, L_PROG), np.uint8)
@@ -145,7 +153,7 @@ def run_ga():
         else:
             tqdm.write(f"Gen {gen:3}  best={fit[0]:.3f}  mean={fit.mean():.3f}")
 
-        # Check‑point
+        # Check-point
         if gen % CHECK_EVERY == 0 or gen == N_GENERATIONS:
             chk = {
                 "gen": gen,

@@ -1,5 +1,5 @@
 """
-em43_numba.py  –  Numba-accelerated batched EM-4/3 simulator
+em43_numba.py  -  Numba-accelerated batched EM-4/3 simulator
 ==================================================================
 Drop-in replacement for the original **em43_parallel.py**.  
 Public API unchanged:
@@ -11,7 +11,7 @@ Key details
 * 1-D CA, 4 states, radius-1, open boundary, 2-cell separator “BB”.
 * Evaluates **B inputs in parallel** for a single genome.
 * Core simulation loop is compiled with Numba (`@njit(cache=True)`).
-* First call takes a few 100 ms to compile, then runs ≈5-10× faster.
+* First call takes a few 100 ms to compile, then runs 5-10x faster.
 
 No bit-packing; all arrays are `uint8`.  First & last columns stay blank.
 
@@ -78,7 +78,7 @@ def _simulate(rule: np.ndarray,
     inputs  : (B,) int64     (values 1..30)
     Returns
     -------
-    outputs : (B,) int32     (−10 on failure)
+    outputs : (B,) int32     (-10 on failure)
     """
     L = prog.shape[0]
     B = inputs.shape[0]

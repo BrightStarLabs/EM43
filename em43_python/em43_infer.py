@@ -1,5 +1,5 @@
 """
-em43_infer.py  –  One-off inference for a trained EM-4/3 genome
+em43_infer.py  -  One-off inference for a trained EM-4/3 genome
 ===============================================================
 
 • Always loads **best_genome.pkl** from the current directory.
@@ -33,7 +33,7 @@ else:
 # ───── load genome ──────────────────────────────────────────────────
 CKPT = Path("best_genome.pkl")
 if not CKPT.exists():
-    sys.exit("best_genome.pkl not found – run the GA first.")
+    sys.exit("best_genome.pkl not found - run the GA first.")
 
 with CKPT.open("rb") as f:
     data = pickle.load(f)

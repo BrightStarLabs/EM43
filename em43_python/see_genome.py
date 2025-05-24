@@ -1,5 +1,5 @@
 """
-see_genome.py  –  Dump a trained EM-4/3 genome as pure numbers
+see_genome.py  -  Dump a trained EM-4/3 genome as pure numbers
 ===========================================================================
 • Reads best_genome.pkl from the current directory.
 • Prints:
@@ -22,7 +22,7 @@ from em43_numba import _sanitize_rule, _sanitize_programme
 
 CKPT = Path("best_genome.pkl")
 if not CKPT.exists():
-    sys.exit("best_genome.pkl not found – train a model first.")
+    sys.exit("best_genome.pkl not found - train a model first.")
 
 # Robust loader for various pickle layouts
 def load_genome(path="best_genome.pkl") -> tuple[np.ndarray,np.ndarray]:

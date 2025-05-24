@@ -1,18 +1,16 @@
 """
-eval_best_model.py – flexible evaluation & visualisation for EM-4/3
+eval_best_model.py - flexible evaluation & visualisation for EM-4/3
 ===================================================================
-* Works with any best_genome.pkl layout (rule/prog pairs or genome key)
-* Command-line flags choose input range and step
-* Reports:
-    – average absolute error
-    – success-rate  (|err| < 0.1)
-    – accuracy      (% exact matches)
-* Generates prediction_plot.png, program_colors.png, optional
+- Works with any best_genome.pkl layout (rule/prog pairs or genome key)
+- Command-line flags choose input range and step
+- Reports:
+    - average absolute error
+    - success-rate  (|err| < 0.1)
+    - accuracy      (% exact matches)
+- Generates prediction_plot.png, program_colors.png, optional
   inference_steps_<n>.png
 
 Author: Giacomo Bocchese - with the help of ChatGPT
-
-this code has not been checked - may still present unexpected behaviours
 """
 
 from __future__ import annotations
