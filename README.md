@@ -30,6 +30,9 @@ In contrast, the **inference interface (HTML visualization)** supports a **dynam
 
 The html interface needs the rules and the program to be manually transferred into the js code.
 
+The c++ code is for faster training, as of now it's slightly faster then python numba (approx 1.5x).
+In future updates of this repo we'll include also the c++ tutorial for installation.
+
 ## Installation
 
 ### Prerequisites
