@@ -17,6 +17,9 @@ The project includes three main components:
 3. `eval_best_model.py`: Evaluates best model after training.
 4. `em43.html`: minimal HTML interface for evaluation purposes.
 
+![image](https://github.com/user-attachments/assets/1896338b-246c-445e-8029-a5c83f8641d5)
+
+
 ## Important note
 
 ## Limitations and Notes
