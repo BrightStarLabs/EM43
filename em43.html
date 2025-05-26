@@ -1,0 +1,216 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Emergent Model - EM43 - Number Doubler</title>
+<style>
+body{font-family:sans-serif;background:#fafafa;margin:1.2rem}
+h1{margin:.2rem 0 .8rem;color:#333}
+h3{color:#333;margin:1.5rem 0 1rem}
+.tagline{color:#666;margin-bottom:1.5rem;font-size:1.1rem}
+.description{max-width:800px;line-height:1.6;color:#444}
+.description p{margin:.8rem 0}
+.description ul{margin:.8rem 0;padding-left:1.5rem}
+.description code{background:#eee;padding:.2rem .4rem;border-radius:3px}
+#ctrl{display:flex;gap:1rem;flex-wrap:wrap;align-items:center;margin-bottom:1rem}
+canvas{border:1px solid #555;display:block}
+#wrap{max-width:100%;overflow:auto;margin-bottom:.6rem;display:none}
+#out{white-space:pre;font-weight:bold;margin-top:.4rem}
+.btn{padding:4px 10px;background:#1665c1;color:#fff;border:none;border-radius:3px;cursor:pointer}
+.btn:hover{background:#0d4c95}
+input[type="number"]{padding:4px;border:1px solid #bbb;border-radius:3px;width:6rem}
+#tooltip{position:absolute;background:rgba(0,0,0,.8);color:#fff;font-size:12px;
+  padding:5px 8px;border-radius:3px;pointer-events:none;display:none;z-index:10}
+</style>
+</head>
+<body>
+<h1>Emergent Model - EM43 - Number Doubler</h1>
+<p class="tagline">A minimal example of an Emergent Model, cellular automaton pre-trained to perform computation — in this case, doubling a number.</p>
+
+<div id="ctrl">
+  n = <input id="nVal" type="number" min="0" value="4">
+  <button id="runBtn"  class="btn">run</button>
+  <label style="margin-left:1rem">
+    zoom <input id="zoom" type="range" min="4" max="40" value="12">
+  </label>
+</div>
+<div id="instruction" style="font-size: 0.9rem; color: #666; margin-bottom: 1rem;">run to execute the simulation</div>
+
+<div id="wrap"><canvas id="cv"></canvas></div>
+<div id="out"></div>
+<div id="tooltip"></div>
+
+<div style="margin-top: 4rem; padding: 2rem; border-top: 1px solid #ddd;">
+  <p>Pre-print: <a href="https://doi.org/10.55277/ResearchHub.70e8enig" target="_blank">https://doi.org/10.55277/ResearchHub.70e8enig</a></p>
+  <p>Support our project: <a href="https://new.researchhub.com/fund/4130/emergent-models-a-general-modeling-framework-as-an-alternative-to-neural-networks" target="_blank">https://new.researchhub.com/fund/4130/emergent-models-a-general-modeling-framework-as-an-alternative-to-neural-networks</a></p>
+</div>
+
+<div class="description">
+  <h3>How it Works</h3>
+  <p><strong>EM-43</strong> is a one-dimensional <strong>cellular automaton</strong> with a neighborhood of 3 and 4 possible cell states:</p>
+  <ul>
+    <li><code>0</code> (blank), <code>1</code> (P – program), <code>2</code> (R – marker), and <code>3</code> (B – boundary/halt).</li>
+  </ul>
+
+  <h3>Tape Structure: Program & Separator</h3>
+  <p>The initial state of the automaton (the tape) is constructed as follows:</p>
+  <pre><code>[program] BB 0^(n+1) R 0</code></pre>
+  <p>The program is a sequence of fixed length (in this model: 32 cells) placed at the beginning of the tape.<br>
+  During training, this program is searched/optimized.</p>
+  <p>The separator <code>BB</code> acts as a clear boundary between program and input.</p>
+  <p>The encoded input is placed after the separator: it consists of n+1 zeroes, followed by a red marker <code>R</code>, and a trailing 0.</p>
+  <p>This structure is critical: the automaton's computation unfolds starting from this initialized state, processing the interaction between the program, the input beacon, and the evolving cell dynamics.</p>
+
+  <h3>Encoding the Input</h3>
+  <p>To provide an input number <code>n</code>, the tape is initialized as:<br>
+  <code>[program] BB 0^(n+1) R 0</code><br>
+  This creates a <strong>beacon</strong>, where the number of <code>0</code>s before the <code>R</code> encodes the value <code>n</code>.</p>
+
+  <h3>Decoding the Output</h3>
+  <p>The automaton halts when <strong>blue (<code>B</code>) cells occupy ≥50% of the non-blank tape</strong>.<br>
+  The <strong>rightmost <code>R</code></strong> is located, and the output is decoded by:</p>
+  <pre><code>output = position(R) − position(last B) − 2</code></pre>
+  <p>This mirrors the encoding procedure.</p>
+
+  <h3>Training</h3>
+  <p>The system was trained using <strong>genetic algorithms</strong> to solve the task:</p>
+  <pre><code>output = 2 × input</code></pre>
+  <p>Only the <strong>rule table</strong> and <strong>initial program</strong> were evolved.<br>
+  Through this process, the automaton learned to perform <strong>emergent computation</strong> — solving the task without explicit programming.</p>
+
+  <h3>Generalization</h3>
+  <p>The model was trained exclusively on inputs from <strong>1 to 30</strong>, but it discovered a <strong>general algorithm</strong> for doubling — not just memorizing examples.<br>
+  It generalizes <strong>perfectly</strong> to all natural numbers (excluded <code>n = 0</code>), despite never having seen them during training.</p>
+</div>
+
+<script>
+/* genome (numeric) ------------------------------------------------------- */
+const PROG=[..."01000010000100000000000001200000"].map(Number);
+const RULE=Uint8Array.from([
+  0,1,0,0, 0,3,3,3, 2,0,0,3, 3,0,1,3,
+  1,1,2,1, 0,0,1,0, 1,2,2,0, 0,0,2,2,
+  0,2,0,2, 3,3,2,2, 1,1,1,1, 3,1,2,1,
+  0,0,3,0, 1,3,1,3, 0,2,2,1, 3,2,1,0
+]);
+const COLORS=["#fff","#000","#ff2222","#1665c1"];
+const lut=(l,c,r)=>(l<<4)|(c<<2)|r;
+
+/* helpers --------------------------------------------------------------- */
+function initTape(n,pad=64){
+  return Uint8Array.from([
+    ...PROG,3,3,...Array(n+1).fill(0),2,0,...Array(pad).fill(0)
+  ]);
+}
+const step=row=>{
+  const N=row.length,nxt=new Uint8Array(N);
+  for(let i=1;i<N-1;i++) nxt[i]=RULE[lut(row[i-1],row[i],row[i+1])];
+  return nxt;
+};
+const halted=row=>{
+  let live=0,b=0;row.forEach(v=>{if(v){live++;if(v===3)b++;}});
+  return live&&b/live>=.5;
+};
+const lastLive=row=>{for(let i=row.length-1;i>=0;i--) if(row[i])return i;return -1;};
+const lastBlue=row=>{
+  for(let i=1;i<row.length;i++) if(row[i-1]===3&&row[i]===3) return i;
+  return -1;
+};
+
+/* DOM refs -------------------------------------------------------------- */
+const cvs=document.getElementById("cv"), ctx=cvs.getContext("2d");
+const zoomRange=document.getElementById("zoom");
+const tooltip=document.getElementById("tooltip");
+const wrap=document.getElementById("wrap"), out=document.getElementById("out");
+
+let trace=[], cell=12, xLastB=-1;
+
+/* main ------------------------------------------------------------------ */
+function run(n){
+  wrap.style.display="block"; out.textContent="computing…";
+  setTimeout(()=>{
+    const t0=performance.now();
+    let tape=initTape(n), steps=0; trace=[]; xLastB=-1;
+    const MAX=15000;
+    while(steps<MAX){
+      trace.push(tape);
+      if(xLastB<0) xLastB=lastBlue(tape);
+      if(halted(tape)) break;
+      if(lastLive(tape)>=tape.length-2) tape=Uint8Array.from([...tape,...Array(64).fill(0)]);
+      tape=step(tape); steps++;
+    }
+    /* unify width */
+    const W=Math.max(...trace.map(r=>r.length));
+    trace=trace.map(r=> r.length<W ? Uint8Array.from([...r,...Array(W-r.length).fill(0)]) : r);
+    draw();
+    /* decode */
+    const rIdx=tape.lastIndexOf(2);
+    const pred=(rIdx>=0&&xLastB>=0)? rIdx-xLastB-2 : null;
+    const ms=(performance.now()-t0).toFixed(1);
+    out.textContent=
+`n          : ${n}
+predicted  : ${pred===null?"NA":pred}
+true value : ${2*n}
+steps      : ${trace.length}
+width      : ${W}
+time (ms)  : ${ms}`;
+  },20);
+}
+
+/* chart drawing --------------------------------------------------------- */
+function draw(){
+  if(!trace.length) return;
+  cell=parseInt(zoomRange.value);
+  const W=trace[0].length,H=trace.length;
+  cvs.width=W*cell; cvs.height=(H+1)*cell;
+  ctx.fillStyle="#fafafa"; ctx.fillRect(0,0,cvs.width,cvs.height);
+
+  /* ruler */
+  ctx.fillStyle="#333"; ctx.font=`${cell-2}px monospace`;
+  for(let x=xLastB+2, rel=0; x<W; x++, rel++){
+    if(rel%5===0){
+      ctx.fillText(rel, x*cell+2, cell-4);
+      ctx.strokeStyle="#ddd";
+      ctx.beginPath();ctx.moveTo(x*cell,cell);ctx.lineTo(x*cell,cvs.height);ctx.stroke();
+    }
+  }
+  /* rows */
+  for(let y=0;y<trace.length;y++){
+    const row=trace[y], yPix=(y+1)*cell;
+    row.forEach((v,x)=>{ctx.fillStyle=COLORS[v];ctx.fillRect(x*cell,yPix,cell,cell);});
+  }
+  /* reference line */
+  if(xLastB>=0){
+    const xRef=(xLastB+2)*cell;
+    ctx.strokeStyle="#444"; ctx.setLineDash([6,4]);
+    ctx.beginPath();ctx.moveTo(xRef,0);ctx.lineTo(xRef,cvs.height);ctx.stroke();
+    ctx.setLineDash([]);
+  }
+}
+
+/* tooltip --------------------------------------------------------------- */
+cvs.onmousemove=e=>{
+  if(!trace.length){tooltip.style.display="none";return;}
+  const r=cvs.getBoundingClientRect();
+  const x=Math.floor((e.clientX-r.left)/cell);
+  const y=Math.floor((e.clientY-r.top)/cell)-1;
+  if(y<0||y>=trace.length||x<0||x>=trace[0].length){
+    tooltip.style.display="none";return;
+  }
+  tooltip.textContent=`rel ${x-xLastB-2}`;
+  tooltip.style.left=(e.clientX+12)+"px";
+  tooltip.style.top =(e.clientY+12)+"px";
+  tooltip.style.display="block";
+};
+cvs.onmouseout=()=>tooltip.style.display="none";
+
+/* UI -------------------------------------------------------------------- */
+document.getElementById("runBtn").onclick=()=>{
+  const n=Math.max(0,+document.getElementById("nVal").value||0);
+  document.getElementById("instruction").style.display = "none";
+  run(n);
+};
+zoomRange.oninput=draw; window.onresize=draw;
+</script>
+</body>
+</html>
