@@ -9,21 +9,24 @@ EM43 is an implementation of an [emergent model (EM)](https://new.researchhub.co
 - **Boundary Conditions**: Open boundary conditions with 2-cell separator "BB"
 - **Optimization**: Numba-accelerated parallel processing for efficient computation
 
+Test the online web app to inference our model: [EM43 viewer](https://bocchesegiacomo.github.io/em43viewer/)
+
 The project includes three main components:
 1. `em43_numba.py`: Core simulation engine with Numba-accelerated parallel processing
 2. `em43_numba_ga.py`: Genetic Algorithm implementation for training the model
 3. `eval_best_model.py`: Evaluates best model after training.
 4. `em43.html`: minimal HTML interface for evaluation purposes.
 
-## Important note
+![image](https://github.com/user-attachments/assets/1896338b-246c-445e-8029-a5c83f8641d5)
 
-## Limitations and Notes
+
+## Important note
 
 This is a **minimal working implementation** of the EM framework. Some advanced features described in the original paper such as **meta-learning**, **inductive biases**, and **state retention**—are **not yet implemented**.
 
 During training, programs operate on a **fixed-length tape** (`width` parameter), and the total number of computational steps is bounded (`max_steps` parameter). This constraint ensures efficient evaluation and keeps the optimization fast and parallelizable.
 
-In contrast, the **inference interface (HTML visualization)** supports a **dynamically extending tape**, allowing for longer and more complex computations during testing or demonstration. This separation allows the model to learn a general algorithm within a bounded window and then **generalize** to arbitrary input lengths during inference.
+In contrast, the **inference interface (HTML visualization)** supports a **dynamically extending tape**, allowing for longer and more complex computations during testing or demonstration. This separation allows the model to learn a general algorithm within a bounded window and then test its **generalization capabilities** to arbitrary input lengths during inference.
 
 The html interface needs the rules and the program to be manually transferred into the js code.
 
