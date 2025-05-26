@@ -23,7 +23,7 @@ This is a **minimal working implementation** of the EM framework. Some advanced 
 
 During training, programs operate on a **fixed-length tape** (`width` parameter), and the total number of computational steps is bounded (`max_steps` parameter). This constraint ensures efficient evaluation and keeps the optimization fast and parallelizable.
 
-In contrast, the **inference interface (HTML visualization)** supports a **dynamically extending tape**, allowing for longer and more complex computations during testing or demonstration. This separation allows the model to learn a general algorithm within a bounded window and then **generalize** to arbitrary input lengths during inference.
+In contrast, the **inference interface (HTML visualization)** supports a **dynamically extending tape**, allowing for longer and more complex computations during testing or demonstration. This separation allows the model to learn a general algorithm within a bounded window and then test its **generalization capabilities** to arbitrary input lengths during inference.
 
 The html interface needs the rules and the program to be manually transferred into the js code.
 
