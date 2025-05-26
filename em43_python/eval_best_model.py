@@ -75,7 +75,7 @@ def main():
     batch=EM43Batch(genome,window=200,max_steps=700,halt_thresh=0.5)
 
     inputs=np.arange(args.start,args.end+1,args.step)
-    outs=batch.run(inputs); expected=inputs*3
+    outs=batch.run(inputs); expected=inputs*2
     errs=np.abs(outs-expected)
     avg_err=float(errs.mean())
     success=float((errs<0.1).mean()*100)
