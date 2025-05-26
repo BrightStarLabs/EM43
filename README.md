@@ -9,9 +9,14 @@ EM43 is an implementation of an [emergent model (EM)](https://new.researchhub.co
 - **Boundary Conditions**: Open boundary conditions with 2-cell separator "BB"
 - **Optimization**: Numba-accelerated parallel processing for efficient computation
 
-The project includes two main components:
+The project includes three main components:
 1. `em43_numba.py`: Core simulation engine with Numba-accelerated parallel processing
 2. `em43_numba_ga.py`: Genetic Algorithm implementation for training the model
+3. `eval_best_model.py`: Evaluates best model after training.
+
+## Important note
+This is a minimal implementation, some of the features shown in the paper (eg. meta-learning, inductive biases, state retention) are not implemented in the current version.
+Programs are searched on a fixed length tape and the tape available for computations is limited in length (parameter `width`), and the computation time is limited (parameter `max_steps)`.
 
 ## Installation
 
