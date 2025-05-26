@@ -9,6 +9,8 @@ EM43 is an implementation of an [emergent model (EM)](https://new.researchhub.co
 - **Boundary Conditions**: Open boundary conditions with 2-cell separator "BB"
 - **Optimization**: Numba-accelerated parallel processing for efficient computation
 
+Test the online web app to inference our model: [EM43 viewer](https://bocchesegiacomo.github.io/em43viewer/)
+
 The project includes three main components:
 1. `em43_numba.py`: Core simulation engine with Numba-accelerated parallel processing
 2. `em43_numba_ga.py`: Genetic Algorithm implementation for training the model
