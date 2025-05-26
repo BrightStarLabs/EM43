@@ -13,10 +13,22 @@ The project includes three main components:
 1. `em43_numba.py`: Core simulation engine with Numba-accelerated parallel processing
 2. `em43_numba_ga.py`: Genetic Algorithm implementation for training the model
 3. `eval_best_model.py`: Evaluates best model after training.
+4. `em43.html`: minimal HTML interface for evaluation purposes.
 
 ## Important note
-This is a minimal implementation, some of the features shown in the paper (eg. meta-learning, inductive biases, state retention) are not implemented in the current version.
-Programs are searched on a fixed length tape and the tape available for computations is limited in length (parameter `width`), and the computation time is limited (parameter `max_steps)`.
+Sure! Here's a clearer and more polished version of that section:
+
+---
+
+## Limitations and Notes
+
+This is a **minimal working implementation** of the EM framework. Some advanced features described in the original paper such as **meta-learning**, **inductive biases**, and **state retention**—are **not yet implemented**.
+
+During training, programs operate on a **fixed-length tape** (`width` parameter), and the total number of computational steps is bounded (`max_steps` parameter). This constraint ensures efficient evaluation and keeps the optimization fast and parallelizable.
+
+In contrast, the **inference interface (HTML visualization)** supports a **dynamically extending tape**, allowing for longer and more complex computations during testing or demonstration. This separation allows the model to learn a general algorithm within a bounded window and then **generalize** to arbitrary input lengths during inference.
+
+The html interface needs the weights and the program to be manually transferred into the js code.
 
 ## Installation
 
