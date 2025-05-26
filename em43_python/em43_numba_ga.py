@@ -42,7 +42,7 @@ EPS_RANDOM_IMMIGRANTS = 0.2  # Probability of introducing random immigrants
 N_COMPLEX_TELEMETRY   = 30   # Frequency of detailed telemetry (in generations)
 
 INPUT_SET   = np.arange(1, 31, dtype=np.int64)  # Input range: 1 to 30
-TARGET_OUT  = 4 * INPUT_SET                    # Target output: 4x input
+TARGET_OUT  = 2 * INPUT_SET                    # Target output: 4x input
 WINDOW      = 200      # Tape length for simulation
 MAX_STEPS   = 800      # Maximum simulation steps
 HALT_THRESH = 0.50     # Threshold for early stopping
