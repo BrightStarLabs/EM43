@@ -50,7 +50,7 @@ print(f"Loaded genome (prog len={len(prog)}) from {CKPT.name}")
 
 # ───── setup simulator ──────────────────────────────────────────────
 # window must be ≥ prog_len + beacon space; pick a generous cap
-WINDOW     = max(500, len(prog) + max(TEST_INPUTS) * 2 + 10)
+WINDOW     = 1000
 MAX_STEPS  = 1500
 HALT_THRESH= 0.50
 
