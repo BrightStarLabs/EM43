@@ -16,9 +16,6 @@ The project includes three main components:
 4. `em43.html`: minimal HTML interface for evaluation purposes.
 
 ## Important note
-Sure! Here's a clearer and more polished version of that section:
-
----
 
 ## Limitations and Notes
 
@@ -28,7 +25,7 @@ During training, programs operate on a **fixed-length tape** (`width` parameter)
 
 In contrast, the **inference interface (HTML visualization)** supports a **dynamically extending tape**, allowing for longer and more complex computations during testing or demonstration. This separation allows the model to learn a general algorithm within a bounded window and then **generalize** to arbitrary input lengths during inference.
 
-The html interface needs the weights and the program to be manually transferred into the js code.
+The html interface needs the rules and the program to be manually transferred into the js code.
 
 ## Installation
 
