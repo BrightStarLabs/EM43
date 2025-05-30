@@ -25,10 +25,6 @@ from typing import List, Tuple
 import numpy as np
 import numba as nb
 
-nb.set_num_threads(nb.config.NUMBA_NUM_THREADS)   # use all available
-print(f"Numba using {nb.get_num_threads()} threads")
-
-
 # ────────────────── helpers & constants ──────────────────────────────
 def lut_idx(l: int, c: int, r: int) -> int:              # 3-tuple → 0..63
     return (l << 4) | (c << 2) | r
@@ -143,6 +139,27 @@ def _simulate(rule: np.ndarray,
 
     return output
 
+# ───────────────── Vectorised fitness via Numba ────────────────────
+@nb.njit(parallel=True, fastmath=True, cache=True, )
+def fitness_population(rules: np.ndarray, progs: np.ndarray, inputs: np.ndarray, target_out: np.ndarray, window: int, max_steps: int, halt_th: float, lambda_p: float) -> np.ndarray:
+    """Compute fitness for every genome in parallel.
+    rules  : (P,64)  uint8
+    progs  : (P,L)   uint8
+    window : int
+    max_steps : int
+    halt_th : float
+    lambda_p : float
+    returns: (P,)    float32
+    """
+    P = rules.shape[0]
+    fitness = np.empty(P, dtype=np.float32)
+    for i in nb.prange(P):
+        outs = _simulate(rules[i], progs[i], inputs, window,
+                        max_steps, halt_th)
+        avg_err = np.abs(outs - target_out).mean()
+        sparsity = np.count_nonzero(progs[i]) / progs.shape[1]
+        fitness[i] = -avg_err - lambda_p * sparsity
+    return fitness
 
 # ────────────────── OO wrapper (same API) ────────────────────────────
 class EM43Batch:
