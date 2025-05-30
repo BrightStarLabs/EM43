@@ -1,98 +1,98 @@
 population:
-  pop-size:
+  pop_size:
     short: -p
     type: int
-    default: 20000
+    value: 20000
     help: 'Number of genomes in the population (default: 20000)'
   generations:
     short: -g
     type: int
-    default: 300
+    value: 300
     help: 'Number of generations to run (default: 300)'
-  elite-frac:
+  elite_frac:
     short: -e
     type: float
-    default: 0.1
+    value: 0.1
     help: 'Fraction of population to keep as elite (default: 0.1)'
-  tourney-k:
+  tourney_k:
     short: -k
     type: int
-    default: 3
+    value: 3
     help: 'Number of genomes to select for tournament (default: 3)'
 
 mutation:
-  mut-rule:
+  mut_rule:
     short: -r
     type: float
-    default: 0.03
+    value: 0.03
     help: 'Probability of mutating each rule entry (default: 0.03)'
-  mut-prog:
+  mut_prog:
     short: -m
     type: float
-    default: 0.08
+    value: 0.08
     help: 'Probability of mutating each program cell (default: 0.08)'
-  prog-len:
+  prog_len:
     short: -l
     type: int
-    default: 10
+    value: 10
     help: 'Length of the program sequence (default: 10)'
 
 regularization:
-  lambda-p:
+  lambda_p:
     short: -a
     type: float
-    default: 0.01
+    value: 0.01
     help: 'Sparsity penalty coefficient (default: 0.01)'
-  random-immigrants:
+  random_immigrants:
     short: -i
     type: float
-    default: 0.2
+    value: 0.2
     help: 'Probability of introducing random immigrants (default: 0.2)'
-  complex-telemetry:
+  complex_telemetry:
     short: -c
     type: int
-    default: 30
+    value: 30
     help: 'Frequency of detailed telemetry (in generations) (default: 30)'
 
 simulation:
   window:
     short: -w
     type: int
-    default: 200
+    value: 200
     help: 'Tape length for simulation (default: 200)'
-  max-steps:
+  max_steps:
     short: -s
     type: int
-    default: 800
+    value: 800
     help: 'Maximum simulation steps (default: 800)'
-  halt-thresh:
+  halt_thresh:
     short: -t
     type: float
-    default: 0.50
+    value: 0.50
     help: 'Threshold for early stopping (default: 0.50)'
 
 checkpoint:
-  check-every:
+  check_every:
     short: -f
     type: int
-    default: 50
+    value: 50
     help: 'Frequency of checkpoint saving (default: 50)'
-  save-dir:
+  save_dir:
     short: -d
     type: str
-    default: dp_checkpoints
+    value: dp_checkpoints
     help: 'Directory for checkpoints (default: dp_checkpoints)'
 
-input-output:
-  input-set:
+input_output:
+  input_set:
     short: -x
     type: str
-    default: 'np.arange(1, 31)'
+    value: 'np.arange(1, 31)'
     help: 'Input range expression (e.g. "np.arange(1, 31)")'
-  target-out:
+  target_out:
     short: -y
     type: str
-    default: 'np.arange(1, 31) * 2'
+    value: 'np.arange(1, 31) * 2'
     help: 'Target output expression (e.g. "np.arange(1, 31) * 2")'
 
 # Default configuration file path

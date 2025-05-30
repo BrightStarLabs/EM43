@@ -6,6 +6,7 @@ import numba as nb
 t0 = time.time()
 args = get_args()
 nb.set_num_threads(nb.config.NUMBA_NUM_THREADS)
+
 print("\n------------------------------")
 print(f"Numba using {nb.get_num_threads()} threads")
 print("Starting EM-4/3 GA with parameters:")
