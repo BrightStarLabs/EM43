@@ -1,5 +1,6 @@
 from em43_utilis import get_args
 from em43_ga import GenomeAlgorithm
+from em43_class import EM43
 import time
 import numba as nb
 
@@ -22,4 +23,17 @@ print(f"Elapsed {time.time()-t0:.1f}s")
 print(f"Best fitness: {best_fitness:.3f}")
 print(f"Best rule: {best_rule}")
 print(f"Best program: {best_prog}")
-print("\n------------------------------")    
+print("\n------------------------------")
+
+print("\n------------------------------")
+print("\nInfer from the best genome...")
+em43 = EM43(best_rule, best_prog)
+em43.evaluate()
+print("\n------------------------------")
+
+print("\n------------------------------")
+print("\nInfer from the best genome by loading it from best_genome.pkl...")
+em43 = EM43()
+em43.load_genome()
+em43.evaluate()
+print("\n------------------------------")   
