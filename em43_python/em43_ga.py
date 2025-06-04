@@ -123,7 +123,16 @@ class GenomeAlgorithm:
             self.pop_rules[i], self.pop_progs[i] = r, p
 
         for gen in tqdm(range(1, self.GENERATIONS+1), ncols=80, desc="GA"):
-            fit = fitness_population(self.pop_rules, self.pop_progs, self.INPUT_SET, self.TARGET_OUT, self.WINDOW, self.MAX_STEPS, self.HALT_THRESH, self.LAMBDA_P)
+            fit = fitness_population(
+                self.pop_rules, 
+                self.pop_progs, 
+                self.INPUT_SET, 
+                self.TARGET_OUT,
+                self.WINDOW,
+                self.MAX_STEPS,
+                self.HALT_THRESH,
+                self.LAMBDA_P
+            )
             order = np.argsort(fit)[::-1]
             self.pop_rules, self.pop_progs, fit = self.pop_rules[order], self.pop_progs[order], fit[order]
 
@@ -179,4 +188,17 @@ class GenomeAlgorithm:
 
             self.pop_rules, self.pop_progs = next_rules, next_progs
 
+        # save the best genome
+        best = {
+                    "gen": gen,
+                    "best_rule": self.pop_rules[0],
+                    "best_prog": self.pop_progs[0],
+                    "best_fitness": float(fit[0]),
+                    "mean_fitness": float(fit.mean()),
+                    "best_curve": self.best_curve,
+                    "mean_curve": self.mean_curve
+                }
+        with open(self.SAVE_DIR / "best_genome.pkl", "wb") as f:
+            pickle.dump(best, f)
+        
         return self.pop_rules[0], self.pop_progs[0], float(fit[0])

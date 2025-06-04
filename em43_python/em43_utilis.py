@@ -87,7 +87,6 @@ def get_args():
         for param_name, param_config in params.items():
             # Get the value from command line arguments
             value = getattr(args, param_name)
-            print(value)
             
             # Convert the type back to string using TYPE_MAP
             type_str = next(key for key, val in TYPE_MAP.items() if val == type(value))
@@ -103,7 +102,7 @@ def get_args():
             updated_section[param_name] = updated_param
         
         updated_config[section] = updated_section
-        print(updated_config)
+    
     # Write the updated config to the timestamped file
     with open(copy_filename, 'w') as f:
         yaml.dump(updated_config, f, 
