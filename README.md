@@ -8,27 +8,20 @@ EM43 is an implementation of an [emergent model (EM)](https://new.researchhub.co
 - **Neighborhood**: Radius-1 neighborhood (3 cells)
 - **Boundary Conditions**: Open boundary conditions with 2-cell separator "BB"
 - **Optimization**: Numba-accelerated parallel processing for efficient computation
+- **Class-based Implementation**: All functionality encapsulated in the `EM43` class
 
-Test the online web app to inference our model: [EM43 viewer](https://bocchesegiacomo.github.io/em43viewer/)
-
-The project includes three main components:
-1. `em43_numba.py`: Core simulation engine with Numba-accelerated parallel processing
-2. `em43_numba_ga.py`: Genetic Algorithm implementation for training the model
-3. `eval_best_model.py`: Evaluates best model after training.
-4. `em43.html`: minimal HTML interface for evaluation purposes.
-
-![image](https://github.com/user-attachments/assets/1896338b-246c-445e-8029-a5c83f8641d5)
-
+## Project Structure
+The project is now organized with a clear separation of concerns:
+1. `em43_python/`: Contains the Python implementation
+   - `em43_class.py`: Main EM43 class implementation
+   - `config.yaml`: Configuration file for all parameters
+   - `em43_demo.py`: Demo training and evaluation script
+   - `em43_ga.py`: Genetic Algorithm implementation
+   - `em43_utilis.py`: Utility functions
+2. `em43.html`: Web-based visualization interface
 
 ## Important note
-
 This is a **minimal working implementation** of the EM framework. Some advanced features described in the original paper such as **meta-learning**, **inductive biases**, and **state retention**—are **not yet implemented**.
-
-During training, programs operate on a **fixed-length tape** (`width` parameter), and the total number of computational steps is bounded (`max_steps` parameter). This constraint ensures efficient evaluation and keeps the optimization fast and parallelizable.
-
-In contrast, the **inference interface (HTML visualization)** supports a **dynamically extending tape**, allowing for longer and more complex computations during testing or demonstration. This separation allows the model to learn a general algorithm within a bounded window and then test its **generalization capabilities** to arbitrary input lengths during inference.
-
-The html interface needs the rules and the program to be manually transferred into the js code.
 
 ## Installation
 
@@ -56,44 +49,84 @@ The project requires the following Python packages:
 - numba: For just-in-time compilation and parallel processing
 - tqdm: For progress bars during training
 - matplotlib: For visualization of results
+- pyyaml: For configuration management
 
 ## Usage
 
 ### Training
-To train the model using the Genetic Algorithm:
+To train the model:
 ```bash
-python em43_numba_ga.py
+python em43_python/em43_demo.py
 ```
 
-The training process will:
-- Initialize a population of candidate solutions
-- Evaluate fitness using parallel processing
-- Evolve the population using genetic operators
-- Track progress with detailed telemetry
-- Save checkpoints periodically
+The training process can be configured through the `em43_python/config.yaml` file, which includes parameters for:
+- Population size and generations
+- Mutation rates
+- Tournament selection parameters
+- Elite fraction
+- Regularization parameters
+- Simulation parameters (window size, max steps, etc.)
+- Checkpoint configuration
 
-### Inference
-To run inference on trained models:
+Or use command line arguments:
 ```bash
-python em43_numba.py
+python em43_python/em43_demo.py --help
 ```
 
-The inference engine provides fast evaluation of trained models on input data.
+### Inference and Evaluation
+To run inference and evaluate the trained model:
+```bash
+python em43_python/em43_demo.py
+```
+
+The script will:
+1. Train the model for the specified number of generations
+2. Save the best genome to `best_genome.pkl`
+3. Load and evaluate the best genome
+4. Generate visualizations:
+   - `prediction_plot.png`: Expected vs Predicted outputs
+   - `program_colors.png`: Program colormap visualization
+
+### Python API
+The model can be used programmatically through the `EM43` class:
+```python
+from em43_python.em43_class import EM43
+
+# Create and load from checkpoint
+em43 = EM43()
+em43.load_genome()  # Loads from best_genome.pkl by default
+
+# Run evaluation with optional plotting
+outputs = em43.evaluate(plot=True)
+```
+
+The `evaluate()` method returns the model's outputs and can optionally display:
+- Interactive plots of expected vs predicted outputs
+- Program colormap visualization
+- Detailed evaluation metrics including:
+  - Stored fitness
+  - Average error
+  - Success rate (|err|<0.1)
+  - Accuracy (exact matches)
+
 
 ## Features
 - Parallel processing using Numba's `prange` for significant speed improvements
 - Random-Immigrant Strategy for maintaining genetic diversity
 - Detailed telemetry tracking including average Hamming distance
-- Configurable parameters for population size, generations, and mutation rates
+- Configurable parameters through YAML configuration
+- Command-line interface with argument parsing
+- Class-based API for programmatic use
 - Checkpoint saving for training resumption
 
 ## Configuration
-Key hyperparameters can be configured in `em43_numba_ga.py`:
-- `POP_SIZE`: Population size (default: 20000)
-- `N_GENERATIONS`: Number of generations (default: 300)
-- `WINDOW`: Tape length (default: 200)
-- `MAX_STEPS`: Maximum simulation steps (default: 800)
-
+The main configuration file is `em43_python/config.yaml`, which contains all hyperparameters organized into sections:
+- Population parameters
+- Mutation rates
+- Regularization
+- Simulation parameters
+- Checkpoint settings
+- Input/output configuration
 
 ## Warranty
 This software is provided "as is" without warranty of any kind, express or
@@ -103,6 +136,3 @@ authors or copyright holders be liable for any claim, damages or other
 liability, whether in an action of contract, tort or otherwise, arising from,
 out of or in connection with the software or the use or other dealings in the
 software.
-
-The software is experimental and may present unexpected behaviors. Users are
-advised to test thoroughly before using in production environments.

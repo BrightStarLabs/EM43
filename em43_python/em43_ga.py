@@ -155,7 +155,8 @@ class GenomeAlgorithm:
                     "best_fitness": float(fit[0]),
                     "mean_fitness": float(fit.mean()),
                     "best_curve": self.best_curve,
-                    "mean_curve": self.mean_curve
+                    "mean_curve": self.mean_curve,
+                    "target_out": self.TARGET_OUT,
                 }
                 
                 chk_path = self.SAVE_DIR / f"checkpoint_gen_{gen}.pkl"
@@ -196,7 +197,8 @@ class GenomeAlgorithm:
                     "best_fitness": float(fit[0]),
                     "mean_fitness": float(fit.mean()),
                     "best_curve": self.best_curve,
-                    "mean_curve": self.mean_curve
+                    "mean_curve": self.mean_curve,
+                    "target_out": self.TARGET_OUT,
                 }
         with open(self.SAVE_DIR / "best_genome.pkl", "wb") as f:
             pickle.dump(best, f)

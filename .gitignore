@@ -7,3 +7,5 @@ __pycache__
 dp_checkpoints
 models/*.pkl
 outputs/*.png
+setup_*.yaml
+best_genome.pkl
