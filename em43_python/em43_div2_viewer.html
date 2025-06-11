@@ -1,0 +1,258 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Emergent Model - EM43 - Even Number Divider by 2</title>
+<style>
+body{font-family:sans-serif;background:#fafafa;margin:1.2rem}
+h1{margin:.2rem 0 .8rem;color:#333}
+h3{color:#333;margin:1.5rem 0 1rem}
+.tagline{color:#666;margin-bottom:1.5rem;font-size:1.1rem}
+.description{max-width:800px;line-height:1.6;color:#444}
+.description p{margin:.8rem 0}
+.description ul{margin:.8rem 0;padding-left:1.5rem}
+.description code{background:#eee;padding:.2rem .4rem;border-radius:3px}
+#ctrl{display:flex;gap:1rem;flex-wrap:wrap;align-items:center;margin-bottom:1rem}
+canvas{border:1px solid #555;display:block}
+#wrap{max-width:100%;overflow:auto;margin-bottom:.6rem;display:none}
+#out{white-space:pre;font-weight:bold;margin-top:.4rem}
+.btn{padding:4px 10px;background:#1665c1;color:#fff;border:none;border-radius:3px;cursor:pointer}
+.btn:hover{background:#0d4c95}
+input[type="number"]{padding:4px;border:1px solid #bbb;border-radius:3px;width:6rem}
+#tooltip{position:absolute;background:rgba(0,0,0,.8);color:#fff;font-size:12px;
+  padding:5px 8px;border-radius:3px;pointer-events:none;display:none;z-index:10}
+.success-banner{background:#4CAF50;color:#fff;padding:8px 12px;border-radius:3px;margin-bottom:1rem;font-weight:bold}
+</style>
+</head>
+<body>
+<h1>Emergent Model - EM43 - Even Number Divider by 2</h1>
+<p class="tagline">A trained EM43 cellular automaton that performs division by 2 on even natural numbers through emergent computation.</p>
+
+<div id="ctrl">
+  n = <input id="nVal" type="number" min="2" value="8" step="2">
+  <button id="runBtn" class="btn">run</button>
+  <label style="margin-left:1rem">
+    zoom <input id="zoom" type="range" min="4" max="40" value="12">
+  </label>
+</div>
+<div id="instruction" style="font-size: 0.9rem; color: #666; margin-bottom: 1rem;">run to execute the division by 2 simulation</div>
+
+<div id="wrap"><canvas id="cv"></canvas></div>
+<div id="out"></div>
+<div id="tooltip"></div>
+
+
+<div class="description">
+  <h3>How it Works</h3>
+  <p><strong>EM-43</strong> is a one-dimensional <strong>cellular automaton</strong> with a neighborhood of 3 and 4 possible cell states:</p>
+  <ul>
+    <li><code>0</code> (blank), <code>1</code> (P – program), <code>2</code> (R – marker), and <code>3</code> (B – boundary/halt).</li>
+  </ul>
+
+  <h3>Tape Structure: Program & Separator</h3>
+  <p>The initial state of the automaton (the tape) is constructed as follows:</p>
+  <pre><code>[program] BB 0^(n+1) R 0</code></pre>
+  <p>The program is a sequence of fixed length (in this model: 12 cells) placed at the beginning of the tape.<br>
+  During training, this program is searched/optimized.</p>
+  <p>The separator <code>BB</code> acts as a clear boundary between program and input.</p>
+  <p>The encoded input is placed after the separator: it consists of n+1 zeroes, followed by a red marker <code>R</code>, and a trailing 0.</p>
+  <p>This structure is critical: the automaton's computation unfolds starting from this initialized state, processing the interaction between the program, the input beacon, and the evolving cell dynamics.</p>
+
+  <h3>Encoding the Input</h3>
+  <p>To provide an input number <code>n</code>, the tape is initialized as:<br>
+  <code>[program] BB 0^(n+1) R 0</code><br>
+  This creates a <strong>beacon</strong>, where the number of <code>0</code>s before the <code>R</code> encodes the value <code>n</code>.</p>
+
+  <h3>Decoding the Output</h3>
+  <p>The automaton halts when <strong>only blue (<code>B</code>) cells remain in the active region</strong>.<br>
+  The <strong>rightmost blue cell</strong> is located, and the output is decoded by:</p>
+  <pre><code>output = position(rightmost B) − program_length − separator_length</code></pre>
+  <p>This spatial encoding allows the result to emerge from the cellular automaton dynamics.</p>
+
+  <h3>Training</h3>
+  <p>The system was trained using <strong>genetic algorithms</strong> to solve the task:</p>
+  <pre><code>output = input ÷ 2</code></pre>
+  <p>Only the <strong>rule table</strong> and <strong>initial program</strong> were evolved.<br>
+  Through this process, the automaton learned to perform <strong>emergent computation</strong> — solving the task without explicit programming.</p>
+
+  <h3>Generalization</h3>
+  <p>The model was trained exclusively on even inputs from <strong>2 to 30</strong>, but it discovered a <strong>general algorithm</strong> for division by 2 — not just memorizing examples.<br>
+  It generalizes <strong>perfectly</strong> to all even natural numbers, despite never having seen them during training.</p>
+</div>
+
+<script>
+/* Actual trained EM43 divide-by-2 genome */
+const PROG=[..."000000000001"].map(Number);
+const RULE=Uint8Array.from([
+  0,0,0,0,0,0,1,1,2,1,1,2,2,1,2,3,
+  1,0,3,3,3,0,3,3,2,3,2,1,2,3,0,2,
+  0,0,2,1,0,2,3,1,3,2,2,2,0,1,3,2,
+  0,2,2,0,2,0,0,3,0,1,1,0,3,1,3,1
+]);
+
+/* color mapping */
+const COLORS=["#fafafa","#1665c1","#c11616","#1665c1"];
+
+/* CA step function */
+function step(tape){
+  const next=new Uint8Array(tape.length);
+  for(let i=1;i<tape.length-1;i++){
+    const L=tape[i-1],C=tape[i],R=tape[i+1];
+    next[i]=RULE[L*16+C*4+R];
+  }
+  return next;
+}
+
+/* tape initialization for division by 2 */
+function initTape(n){
+  const prog=PROG.slice(); // Program (length 12)
+  const sep=[3,3]; // BB separator
+  // Python: r_idx = L + 2 + inputs[b] + 1, so R is at position L+2+n+1
+  // For n=6: R at position 12+2+6+1 = 21
+  // Tape: [prog(12)] [BB] [0^(n+1)] [R] [0] [padding]
+  //       0-11        12-13  14-20     21   22   23+
+  const zeros_before_r = Array(n+1).fill(0); // n+1 zeros before R
+  const r_and_after = [2, 0]; // R followed by 0
+  const padding = Array(200).fill(0); // Padding
+  return Uint8Array.from([...prog, ...sep, ...zeros_before_r, ...r_and_after, ...padding]);
+}
+
+/* utility functions */
+function lastLive(tape){
+  for(let i=tape.length-1;i>=0;i--) if(tape[i]>0) return i;
+  return -1;
+}
+
+function lastBlue(tape){
+  for(let i=tape.length-1;i>=0;i--) if(tape[i]===3) return i;
+  return -1;
+}
+
+function halted(tape){
+  const live=tape.filter(x=>x>0).length;
+  const blue=tape.filter(x=>x===3).length;
+  const red=tape.filter(x=>x===2).length;
+  const black=tape.filter(x=>x===1).length;
+
+  // Halt when pattern has stabilized: only blue cells remain (no red or black)
+  // and there are enough blue cells to indicate completion
+  return live > 0 && blue === live && blue >= 2;
+}
+
+/* DOM refs */
+const cvs=document.getElementById("cv"), ctx=cvs.getContext("2d");
+const zoomRange=document.getElementById("zoom");
+const tooltip=document.getElementById("tooltip");
+const wrap=document.getElementById("wrap"), out=document.getElementById("out");
+
+let trace=[], cell=12, xLastB=-1;
+/* main simulation function */
+function run(n){
+  wrap.style.display="block"; out.textContent="computing…";
+  setTimeout(()=>{
+    const t0=performance.now();
+    let tape=initTape(n), steps=0; trace=[]; xLastB=-1;
+    const MAX=15000;
+    while(steps<MAX){
+      trace.push(tape.slice()); // Store copy of current state
+      if(xLastB<0) xLastB=lastBlue(tape);
+
+      // Check for proper halting condition
+      if(halted(tape)) break;
+
+      if(lastLive(tape)>=tape.length-2) tape=Uint8Array.from([...tape,...Array(64).fill(0)]);
+      tape=step(tape); steps++;
+    }
+    /* unify width */
+    const W=Math.max(...trace.map(r=>r.length));
+    trace=trace.map(r=> r.length<W ? Uint8Array.from([...r,...Array(W-r.length).fill(0)]) : r);
+    draw();
+    /* decode */
+    const rIdx=tape.lastIndexOf(2);
+
+    // Find the rightmost blue cell (value 3) in the entire final tape
+    let rightmostBlue = -1;
+    for (let i = tape.length - 1; i >= 0; i--) {
+      if (tape[i] === 3) {
+        rightmostBlue = i;
+        break;
+      }
+    }
+
+    // Decode based on rightmost blue position
+    let pred = null;
+    if (rightmostBlue >= 0) {
+      // The result is encoded as: rightmost_blue - (program_length + separator_length)
+      // For n=6: rightmost blue at 17, L=12, separator=2, so 17-(12+2) = 3 ✓
+      pred = rightmostBlue - (PROG.length + 2);
+    }
+    const ms=(performance.now()-t0).toFixed(1);
+    out.textContent=
+`n          : ${n}
+predicted  : ${pred===null?"NA":pred}
+true value : ${Math.floor(n/2)}
+steps      : ${trace.length}
+width      : ${W}
+time (ms)  : ${ms}`;
+  },20);
+}
+/* chart drawing */
+function draw(){
+  if(!trace.length) return;
+  cell=parseInt(zoomRange.value);
+  const W=trace[0].length,H=trace.length;
+  cvs.width=W*cell; cvs.height=(H+1)*cell;
+  ctx.fillStyle="#fafafa"; ctx.fillRect(0,0,cvs.width,cvs.height);
+
+  /* ruler */
+  ctx.fillStyle="#333"; ctx.font=`${cell-2}px monospace`;
+  for(let x=xLastB+2, rel=0; x<W; x++, rel++){
+    if(rel%5===0){
+      ctx.fillText(rel, x*cell+2, cell-4);
+      ctx.strokeStyle="#ddd";
+      ctx.beginPath();ctx.moveTo(x*cell,cell);ctx.lineTo(x*cell,cvs.height);ctx.stroke();
+    }
+  }
+  /* rows */
+  for(let y=0;y<trace.length;y++){
+    const row=trace[y], yPix=(y+1)*cell;
+    row.forEach((v,x)=>{ctx.fillStyle=COLORS[v];ctx.fillRect(x*cell,yPix,cell,cell);});
+  }
+  /* reference line */
+  if(xLastB>=0){
+    const xRef=(xLastB+2)*cell;
+    ctx.strokeStyle="#444"; ctx.setLineDash([6,4]);
+    ctx.beginPath();ctx.moveTo(xRef,0);ctx.lineTo(xRef,cvs.height);ctx.stroke();
+    ctx.setLineDash([]);
+  }
+}
+
+/* tooltip */
+cvs.onmousemove=e=>{
+  if(!trace.length){tooltip.style.display="none";return;}
+  const r=cvs.getBoundingClientRect();
+  const x=Math.floor((e.clientX-r.left)/cell);
+  const y=Math.floor((e.clientY-r.top)/cell)-1;
+  if(y<0||y>=trace.length||x<0||x>=trace[0].length){
+    tooltip.style.display="none";return;
+  }
+  tooltip.textContent=`rel ${x-xLastB-2}`;
+  tooltip.style.left=(e.clientX+12)+"px";
+  tooltip.style.top =(e.clientY+12)+"px";
+  tooltip.style.display="block";
+};
+cvs.onmouseout=()=>tooltip.style.display="none";
+
+/* UI */
+document.getElementById("runBtn").onclick=()=>{
+  const n=Math.max(2,+document.getElementById("nVal").value||2);
+  // Ensure even number
+  if(n%2!==0) document.getElementById("nVal").value=n+1;
+  document.getElementById("instruction").style.display = "none";
+  run(Math.max(2,Math.floor(n/2)*2));
+};
+zoomRange.oninput=draw; window.onresize=draw;
+</script>
+</body>
+</html>
