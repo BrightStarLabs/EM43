@@ -185,6 +185,143 @@ class EM43Batch:
                          self.halt_thresh)
 
 
+# ────────────────── Two-input simulation for GCD/LCM ────────────────
+@nb.njit(cache=True)
+def _simulate_two_inputs(rule: np.ndarray,
+                        prog: np.ndarray,
+                        inputs_a: np.ndarray,
+                        inputs_b: np.ndarray,
+                        window: int,
+                        max_steps: int,
+                        halt_th: float) -> np.ndarray:
+    """
+    Two-input simulation for operations like GCD/LCM.
+
+    Tape structure: [program] BB 0^(a+1) R 0^(b+1) R 0
+
+    Parameters
+    ----------
+    rule      : (64,) uint8
+    prog      : (L,)  uint8
+    inputs_a  : (B,) int64     (first input values)
+    inputs_b  : (B,) int64     (second input values)
+    Returns
+    -------
+    outputs   : (B,) int32     (-10 on failure)
+    """
+    L = prog.shape[0]
+    B = inputs_a.shape[0]
+    N = window
+
+    state   = np.zeros((B, N), np.uint8)
+    halted  = np.zeros(B, np.bool_)
+    frozen  = np.zeros_like(state)
+    output  = np.full(B, -10, np.int32)
+
+    # write programme & separator
+    for b in range(B):
+        for j in range(L):
+            state[b, j] = prog[j]
+        state[b, L    ] = 3     # B
+        state[b, L + 1] = 3     # B
+
+    # write two beacons: 0^(a+1) R 0^(b+1) R 0
+    for b in range(B):
+        # First beacon: a+1 zeros, then R
+        r1_idx = L + 2 + inputs_a[b] + 1
+        state[b, r1_idx] = 2
+
+        # Second beacon: b+1 zeros after first R, then second R
+        r2_idx = r1_idx + 1 + inputs_b[b] + 1
+        if r2_idx < N:
+            state[b, r2_idx] = 2
+
+    # main loop
+    for _ in range(max_steps):
+        active_any = False
+        for b in range(B):
+            if halted[b]:
+                continue
+            active_any = True
+            nxt = np.zeros(N, np.uint8)
+            for x in range(1, N - 1):
+                idx = (state[b, x-1] << 4) | (state[b, x] << 2) | state[b, x+1]
+                nxt[x] = rule[idx]
+            state[b] = nxt
+
+            # halting check
+            live = blue = 0
+            for x in range(N):
+                v = nxt[x]
+                if v != 0:
+                    live += 1
+                    if v == 3:
+                        blue += 1
+            if live > 0 and blue / live >= halt_th:
+                halted[b] = True
+                frozen[b] = nxt
+
+        if not active_any:
+            break
+
+    # decode outputs - find rightmost R and decode relative to last BB
+    for b in range(B):
+        if not halted[b]:
+            continue
+        rpos = -1
+        for x in range(N - 1, -1, -1):
+            if frozen[b, x] == 2:
+                rpos = x
+                break
+        if rpos != -1:
+            # Find the position after the second input beacon
+            a_val = inputs_a[b]
+            b_val = inputs_b[b]
+            expected_second_r = L + 2 + a_val + 1 + 1 + b_val + 1
+            output[b] = rpos - expected_second_r
+
+    return output
+
+
+class EM43TwoInputBatch:
+    """
+    Evaluate a single genome on pairs of inputs for two-input operations like GCD/LCM.
+
+    Tape structure: [program] BB 0^(a+1) R 0^(b+1) R 0
+    """
+
+    def __init__(self,
+                 genome: Tuple[np.ndarray, np.ndarray],
+                 window: int = 800,
+                 max_steps: int = 512,
+                 halt_thresh: float = 0.50):
+        rule, prog = genome
+        self.rule  = _sanitize_rule(rule)
+        self.prog  = _sanitize_programme(prog)
+        self.L     = len(self.prog)
+
+        # Need more space for two inputs: L + BB + max_a + R + max_b + R + output_space
+        if self.L + 10 >= window:
+            raise ValueError("window too small for given programme length and two inputs")
+
+        self.N           = window
+        self.max_steps   = max_steps
+        self.halt_thresh = halt_thresh
+
+    def run(self, inputs_a: List[int], inputs_b: List[int]) -> np.ndarray:
+        """Compute outputs for pairs of inputs (a, b)."""
+        if len(inputs_a) != len(inputs_b):
+            raise ValueError("inputs_a and inputs_b must have the same length")
+
+        return _simulate_two_inputs(self.rule,
+                                   self.prog,
+                                   np.asarray(inputs_a, dtype=np.int64),
+                                   np.asarray(inputs_b, dtype=np.int64),
+                                   self.N,
+                                   self.max_steps,
+                                   self.halt_thresh)
+
+
 # ────────────────── quick demo ───────────────────────────────────────
 if __name__ == "__main__":
     rng = np.random.default_rng()
@@ -192,3 +329,7 @@ if __name__ == "__main__":
     prog = rng.choice([0, 1, 2], size=32, p=[0.7, 0.2, 0.1])
     sim  = EM43Batch((rule, prog), window=300, max_steps=256)
     print("outputs 1..30:", sim.run(list(range(1, 31))))
+
+    # Test two-input version
+    sim2 = EM43TwoInputBatch((rule, prog), window=800, max_steps=512)
+    print("two-input test:", sim2.run([3, 6], [4, 8]))
