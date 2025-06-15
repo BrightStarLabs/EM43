@@ -185,7 +185,7 @@ class EM43Batch:
         self.L     = len(self.prog)
 
         if self.L + 5 >= window:             # L + BB + 0 R 0  needs ≥5 extra
-            raise ValueError("window too small for given programme length")
+            raise ValueError(f"window {window} too small for given programme length {self.L}")
 
         self.N           = window
         self.max_steps   = max_steps

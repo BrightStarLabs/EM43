@@ -182,8 +182,8 @@ class EM43:
             print("\nProgramme:\n"+self.prog_str(self.pop_prog))
             print("\nInput | Out | Exp | Err")
             print("-"*38)
-            for n,o,e,er in zip(inputs,outputs,self.expected,errs):
-                print(f"{n:5d} | {o:4d} | {e:4d} | {er:4d}")
+            for n,o,e,er in zip(inputs, outputs, self.expected, errs):
+                print(f"{n:5d} | {o:4f} | {e:4f} | {er:4f}")
 
         if plot:
             plt.figure(figsize=(8,6))
