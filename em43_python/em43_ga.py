@@ -22,6 +22,7 @@ from tqdm import tqdm
 
 from em43_numba import _sanitize_rule, _sanitize_programme, fitness_population
 
+rng = np.random.default_rng()
 
 class GenomeAlgorithm:
     def __init__(self, args):
@@ -68,34 +69,34 @@ class GenomeAlgorithm:
 
     # ───────────────── GA methods ──────────────────────────────────────
     def random_genome(self) -> tuple[np.ndarray, np.ndarray]:
-        rule = np.random.randint(0, 4, 64, dtype=np.uint8)
-        prog = np.random.choice([0, 1, 2], size=self.PROG_LEN, p=[0.7, 0.2, 0.1])
+        rule = rng.integers(0, 4, 64, dtype=np.uint8)
+        prog = rng.choice([0, 1, 2], size=self.PROG_LEN, p=[0.7, 0.2, 0.1])
         return _sanitize_rule(rule), _sanitize_programme(prog)
 
     def tournament(self, pop_rules, pop_progs, fit):
-        idx = np.random.choice(self.POP_SIZE, self.TOURNEY_K, replace=False)
+        idx = rng.choice(self.POP_SIZE, self.TOURNEY_K, replace=False)
         best = idx[np.argmax(fit[idx])]
         return pop_rules[best], pop_progs[best]
 
     def crossover(self, rule1, prog1, rule2, prog2):
         vec1 = np.concatenate((rule1, prog1))
         vec2 = np.concatenate((rule2, prog2))
-        cut = np.random.randint(1, vec1.size)
+        cut = rng.integers(1, vec1.size)
         child = np.concatenate((vec1[:cut], vec2[cut:]))
         return _sanitize_rule(child[:64]), _sanitize_programme(child[64:64+self.PROG_LEN])
 
     def mutate(self, rule, prog):
         # LUT entries
-        mask_r = np.random.random(64) < self.P_MUT_RULE
+        mask_r = rng.random(64) < self.P_MUT_RULE
         if mask_r.any():
             rule = rule.copy()
-            rule[mask_r] = np.random.randint(0, 4, mask_r.sum(), dtype=np.uint8)
+            rule[mask_r] = rng.integers(0, 4, mask_r.sum(), dtype=np.uint8)
             rule = _sanitize_rule(rule)
         # Programme cells
-        mask_p = np.random.random(self.PROG_LEN) < self.P_MUT_PROG
+        mask_p = rng.random(self.PROG_LEN) < self.P_MUT_PROG
         if mask_p.any():
             prog = prog.copy()
-            prog[mask_p] = np.random.choice([0,1,2], size=mask_p.sum(), p=[0.7,0.2,0.1])
+            prog[mask_p] = rng.choice([0,1,2], size=mask_p.sum(), p=[0.7,0.2,0.1])
             prog = _sanitize_programme(prog)
         return rule, prog
 
