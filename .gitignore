@@ -9,3 +9,4 @@ models/*.pkl
 outputs/*.png
 setup_*.yaml
 best_genome.pkl
+plots/*.png

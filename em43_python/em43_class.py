@@ -54,6 +54,9 @@ class EM43:
         self.batcher = None
         self.expected = None
         self.fit = None
+        self.project_root = Path(__file__).parent
+        self.plot_dir = self.project_root / Path("plots")
+
         
         # Initialize simulator only if rule and prog are provided
         if self.pop_rule is not None and self.pop_prog is not None:
@@ -75,8 +78,7 @@ class EM43:
             full_path: Path to the checkpoint file relative to the project root
         """
         if full_path is None:
-            project_root = Path(__file__).parent  # Go up two levels from this file
-            full_path = project_root / Path("dp_checkpoints/best_genome.pkl")
+            full_path = self.project_root / Path("dp_checkpoints/best_genome.pkl")
         
         # Create the directory if it doesn't exist
         full_path.parent.mkdir(parents=True, exist_ok=True)
@@ -151,12 +153,6 @@ class EM43:
         """Convert a programme array to a string."""
         return "".join(SYMBOLS[x] for x in p)
     
-    @staticmethod
-    def prog_colormap(p: np.ndarray) -> None:
-        """Display a programme array as a colormap."""
-        plt.figure(figsize=(12,2)); plt.imshow([p], cmap=CMAP, aspect="auto")
-        plt.axis("off"); plt.title("Programme"); plt.savefig("program_colors.png", dpi=150, bbox_inches="tight"); plt.close()
-
     def evaluate(self, inputs: Optional[List[int|float]] = None, verbose: bool = True, plot: bool = True) -> List[int|float]:
         """
         Evaluate the model on a list of inputs.
@@ -172,7 +168,7 @@ class EM43:
             raise ValueError("Model not initialized. Load a genome first: `em43.load_genome()`.")
         if self.expected is None:
             raise ValueError("Expected values not initialized. Load a genome first: `em43.load_genome()`.")
-        print(self.expected)
+        
         if not inputs:  # if no inputs are provided
             inputs = list(range(1, len(self.expected)+1))  # default 1..10    
 
@@ -200,12 +196,18 @@ class EM43:
                 print(f"{n:5d} | {o:4f} | {e:4f} | {er:4f}")
 
         if plot:
+            # Create the directory if it doesn't exist
+            self.plot_dir.mkdir(parents=True, exist_ok=True)
             plt.figure(figsize=(8,6))
             plt.plot(inputs,self.expected,"b-",lw=2,label="Expected")
             plt.plot(inputs,outputs,"r--",lw=2,label="Predicted"); plt.scatter(inputs,outputs,color="red")
             plt.grid(alpha=0.3); plt.xlabel("Input"); plt.ylabel("Output"); plt.title("Expected vs Predicted")
+            plt.text(0.05, 0.95, f"Stored fitness : {self.fit:.3f}", transform=plt.gca().transAxes)
+            plt.text(0.05, 0.90, f"Avg |err|      : {avg_err:.3f}", transform=plt.gca().transAxes)
+            plt.text(0.05, 0.85, f"Success rate  : {success:.1f}%  (|err|<0.1)", transform=plt.gca().transAxes)
+            plt.text(0.05, 0.80, f"Accuracy      : {accuracy:.1f}%  (exact)", transform=plt.gca().transAxes)
+            plt.text(0.05, 0.75, f"Programme     : {self.prog_str(self.pop_prog)}", transform=plt.gca().transAxes)
             plt.legend(); plt.tight_layout(); 
-            self.prog_colormap(self.pop_prog)
-            plt.savefig("prediction_plot.png",dpi=150); 
+            plt.savefig(self.plot_dir / "prediction_plot.png",dpi=150); 
 
         return outputs
