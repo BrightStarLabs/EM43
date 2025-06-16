@@ -19,6 +19,7 @@ from pathlib import Path
 from typing import Optional, List
 from em43_numba import EM43Batch
 from matplotlib.colors import ListedColormap
+import sys
 
 # ───────────── symbols & cmap ─────────────
 SYMBOLS = {0: "·", 1: "P", 2: "R", 3: "B"}
@@ -67,29 +68,42 @@ class EM43:
             halt_thresh=self.HALT_THRESH
         )
 
-    def load_genome(self, checkpoint_path: Path=Path("dp_checkpoints/best_genome.pkl")) -> None:
-        """
-        Load a genome from a checkpoint file.
+    def load_genome(self, full_path: Path = None) -> None:
+        """Load a genome from a checkpoint file.
         
         Args:
-            checkpoint_path: Path to the checkpoint file
+            full_path: Path to the checkpoint file relative to the project root
         """
-        with checkpoint_path.open("rb") as f:
-            data = pickle.load(f)
-            
-        # Handle different pickle layouts
-        if "genome" in data:
-            self.pop_rule, self.pop_prog = data["genome"]
-        elif {"best_rule", "best_prog", "target_out","best_fitness"}.issubset(data):
-            self.pop_rule, self.pop_prog = data["best_rule"], data["best_prog"]
-            self.expected = data["target_out"]
-            self.fit = data["best_fitness"]
-        else:
-            self.pop_rule, self.pop_prog = data.get("best", [(None, None)])[0]
+        if full_path is None:
+            project_root = Path(__file__).parent  # Go up two levels from this file
+            full_path = project_root / Path("dp_checkpoints/best_genome.pkl")
+        
+        # Create the directory if it doesn't exist
+        full_path.parent.mkdir(parents=True, exist_ok=True)
+        
+        try:
+            with full_path.open("rb") as f:
+                data = pickle.load(f)
+                
+            # Handle different pickle layouts
+            if "genome" in data:
+                self.pop_rule, self.pop_prog = data["genome"]
+            elif {"best_rule", "best_prog", "target_out","best_fitness"}.issubset(data):
+                self.pop_rule, self.pop_prog = data["best_rule"], data["best_prog"]
+                self.expected = data["target_out"]
+                self.fit = data["best_fitness"]
+            else:
+                self.pop_rule, self.pop_prog = data.get("best", [(None, None)])[0]
 
-        print(data)
-        self._initialize_simulator()
-        print(f"Loaded genome (prog len={len(self.pop_prog)}) from {checkpoint_path.name}")
+            print(data)
+            self._initialize_simulator()
+            print(f"Loaded genome (prog len={len(self.pop_prog)}) from {full_path.name}")
+        except FileNotFoundError:
+            print(f"Error: Genome file not found at {full_path}")
+            sys.exit(1)
+        except Exception as e:
+            print(f"Error loading genome: {e}")
+            sys.exit(1)
 
     def infer(self, inputs: Optional[List[int]] = None, print_results: bool = True) -> List[int]:
         """
@@ -143,12 +157,12 @@ class EM43:
         plt.figure(figsize=(12,2)); plt.imshow([p], cmap=CMAP, aspect="auto")
         plt.axis("off"); plt.title("Programme"); plt.savefig("program_colors.png", dpi=150, bbox_inches="tight"); plt.close()
 
-    def evaluate(self, inputs: Optional[List[int]] = None, verbose: bool = True, plot: bool = True) -> List[int]:
+    def evaluate(self, inputs: Optional[List[int|float]] = None, verbose: bool = True, plot: bool = True) -> List[int|float]:
         """
         Evaluate the model on a list of inputs.
         
         Args:
-            inputs: List of integer inputs to process
+            inputs: List of integer or float inputs to process
             print_results: Whether to print results
             
         Returns:

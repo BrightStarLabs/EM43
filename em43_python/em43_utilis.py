@@ -26,7 +26,7 @@ except yaml.YAMLError as e:
     print(f"Error parsing YAML configuration: {e}")
     sys.exit(1)
 
-def get_args():
+def get_config():
     # Convert YAML config to the original dictionary format
     ARGUMENTS = {}
     for section, params in config.items():
@@ -58,11 +58,30 @@ def get_args():
         help=f'Path to configuration file (default: config.yaml)'
     )
     
+    return parser
+
+
+def get_stage(parser):
+    """Add stage argument to the parser."""
+    parser.add_argument(
+        '--stage',
+        type=str,
+        default="train",
+        choices=["train", "infer", "evaluate"],
+        help=f'Stage to start the demo (default: train)'
+    )
+    return parser
+
+
+def get_args():
+    """Parse all arguments and return the command line arguments."""
+    parser = get_config()
+    parser = get_stage(parser)
     args = parser.parse_args()
 
     try:
         # Check input and target output lengths
-        if len(eval(args.input_set, {'np': np})) != len(eval(args.target_out, {'np': np})):
+        if len(eval(args.input_set, {'np': np})) != len(eval(args.target_out, {'np': np})): 
             raise ValueError("Input set and target output must have the same length") 
     except Exception as e:
         print(f"Error missing input set or target output: {e}")
@@ -124,3 +143,4 @@ def get_args():
             print(f"Warning: Config file {config_file} not found, using default values")
     
     return args
+    

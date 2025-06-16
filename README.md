@@ -1,114 +1,7 @@
 # EM43 - Emergent Model with 4 States
 
 ## Overview
-EM43 is an implementation of an [emergent model (EM)](https://new.researchhub.com/fund/4130/emergent-models-a-general-modeling-framework-as-an-alternative-to-neural-networks) featuring 4 states and a neighborhood of 3 cells. This project provides both training and inference capabilities for EM models with the following characteristics:
-
-- **Architecture**: 1-D EM
-- **States**: 4 distinct states (0-3)
-- **Neighborhood**: Radius-1 neighborhood (3 cells)
-- **Boundary Conditions**: Open boundary conditions with 2-cell separator "BB"
-- **Optimization**: Numba-accelerated parallel processing for efficient computation
-- **Class-based Implementation**: All functionality encapsulated in the `EM43` class
-
-## Project Structure
-The project is now organized with a clear separation of concerns:
-1. `em43_python/`: Contains the Python implementation
-   - `em43_class.py`: Main EM43 class implementation
-   - `config.yaml`: Configuration file for all parameters
-   - `em43_demo.py`: Demo training and evaluation script
-   - `em43_ga.py`: Genetic Algorithm implementation
-   - `em43_utilis.py`: Utility functions
-2. `em43.html`: Web-based visualization interface
-
-## Important note
-This is a **minimal working implementation** of the EM framework. Some advanced features described in the original paper such as **meta-learning**, **inductive biases**, and **state retention**—are **not yet implemented**.
-
-## Installation
-
-### Prerequisites
-- Python 3.11 or higher 
-
-### Setup
-1. Clone the repository:
-```bash
-git clone [repository-url](https://github.com/BrightStarLabs/EM43.git)
-cd EM43
-```
-2. Create a virtual environment:
-```bash
-python -m venv .venv --prompt em43
-source .venv/bin/activate
-```
-3. Install dependencies:
-```bash
-pip install -r requirements.txt
-```
-
-The project requires the following Python packages:
-- numpy: For numerical computations
-- numba: For just-in-time compilation and parallel processing
-- tqdm: For progress bars during training
-- matplotlib: For visualization of results
-- pyyaml: For configuration management
-
-## Usage
-
-### Training
-To train the model:
-```bash
-python em43_python/em43_demo.py
-```
-
-The training process can be configured through the `em43_python/config.yaml` file, which includes parameters for:
-- Population size and generations
-- Mutation rates
-- Tournament selection parameters
-- Elite fraction
-- Regularization parameters
-- Simulation parameters (window size, max steps, etc.)
-- Checkpoint configuration
-
-Or use command line arguments:
-```bash
-python em43_python/em43_demo.py --help
-```
-
-### Inference and Evaluation
-To run inference and evaluate the trained model:
-```bash
-python em43_python/em43_demo.py
-```
-
-The script will:
-1. Train the model for the specified number of generations
-2. Save the best genome to `best_genome.pkl`
-3. Load and evaluate the best genome
-4. Generate visualizations:
-   - `prediction_plot.png`: Expected vs Predicted outputs
-   - `program_colors.png`: Program colormap visualization
-
-### Python API
-The model can be used programmatically through the `EM43` class:
-```python
-from em43_python.em43_class import EM43
-
-# Create and load from checkpoint
-em43 = EM43()
-em43.load_genome()  # Loads from best_genome.pkl by default
-
-# Run evaluation with optional plotting
-outputs = em43.evaluate(plot=True)
-```
-
-The `evaluate()` method returns the model's outputs and can optionally display:
-- Interactive plots of expected vs predicted outputs
-- Program colormap visualization
-- Detailed evaluation metrics including:
-  - Stored fitness
-  - Average error
-  - Success rate (|err|<0.1)
-  - Accuracy (exact matches)
-
+EM43 is an implementation of an [emergent model (EM)](https://new.researchhub.com/fund/4130/emergent-models-a-general-modeling-framework-as-an-alternative-to-neural-networks) featuring 4 states and a neighborhood of 3 cells.
 
 ## Features
 - Parallel processing using Numba's `prange` for significant speed improvements
@@ -118,6 +11,97 @@ The `evaluate()` method returns the model's outputs and can optionally display:
 - Command-line interface with argument parsing
 - Class-based API for programmatic use
 - Checkpoint saving for training resumption
+
+## Installation
+### Prerequisites
+- Python 3.11 or higher 
+
+### Setup
+1. Clone the repository:
+```bash
+git clone https://github.com/BrightStarLabs/EM43.git
+cd EM43
+```
+2. Create a virtual environment:
+```bash
+uv venv .venv --prompt em43 
+# or  
+python -m venv .venv --prompt em43
+source .venv/bin/activate
+```
+3. Install dependencies:
+```bash
+uv pip install -r requirements.txt
+# or 
+pip install -r requirements.txt
+```
+
+## Demo Usage
+
+The EM-4/3 demo provides three main stages of operation:
+
+### 1. Full Training Mode
+```bash
+python em43_python/em43_demo.py
+```
+Runs all stages sequentially:
+1. Trains the model for the specified number of generations
+2. Saves the best genome
+3. Runs inference on the best genome
+4. Evaluates the model's performance
+
+### 2. Inference Mode
+```bash
+python em43_python/em43_demo.py --stage infer
+```
+Starts from inference using the saved best genome and continues to evaluation.
+
+### 3. Evaluation Mode
+```bash
+python em43_python/em43_demo.py --stage evaluate
+```
+Directly evaluates the saved best genome.
+
+### Custom Configuration
+You can customize the training process using various command-line arguments:
+```bash
+python em43_python/em43_demo.py --help
+```
+
+Key parameters include:
+- `--pop_size`: Population size for the genetic algorithm
+- `--generations`: Number of generations to run
+- `--mut_rule`: Rule mutation rate
+- `--mut_prog`: Program mutation rate
+- `--prog_len`: Program length
+- `--window`: Simulation window size
+- `--max_steps`: Maximum steps in simulation
+- `--halt_thresh`: Halt threshold for simulation
+
+### Example Usage
+```bash
+# Run full training with custom parameters
+python em43_python/em43_demo.py --pop_size 10000 --generations 200
+
+# Run inference only using saved model
+python em43_python/em43_demo.py --stage infer
+
+# Evaluate saved model only
+python em43_python/em43_demo.py --stage evaluate
+```
+
+### Output
+The demo generates two visualization files:
+- `prediction_plot.png`: Shows expected vs predicted outputs
+- `program_colors.png`: Visualizes the program colormap
+
+The evaluation output provides several key metrics:
+- Stored fitness: The fitness score from training
+- Avg |err|: Average absolute error
+- Success rate: Percentage of outputs within 0.1 of expected
+- Accuracy: Percentage of exact matches
+- Program visualization: Shows the learned program rules
+- Input/Output table: Detailed comparison of actual vs expected outputs
 
 ## Configuration
 The main configuration file is `em43_python/config.yaml`, which contains all hyperparameters organized into sections:
