@@ -55,7 +55,7 @@ class EM43:
         self.expected = None
         self.fit = None
         self.project_root = Path(__file__).parent
-        self.plot_dir = self.project_root / Path("plots")
+        self.plot_dir = self.project_root.parent / Path("plots")
 
         
         # Initialize simulator only if rule and prog are provided
