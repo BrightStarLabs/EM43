@@ -190,10 +190,11 @@ class EM43:
             print(f"Success rate  : {success:.1f}%  (|err|<0.1)")
             print(f"Accuracy      : {accuracy:.1f}%  (exact)")
             print("\nProgramme:\n"+self.prog_str(self.pop_prog))
-            print("\nInput | Out | Exp | Err")
-            print("-"*38)
+            print("\nInput | Out | Exp | Err | Status")
+            print("-"*42)
             for n,o,e,er in zip(inputs, outputs, self.expected, errs):
-                print(f"{n:5d} | {o:4f} | {e:4f} | {er:4f}")
+                status = "✓" if o == e else "✗"
+                print(f"{n:5d} | {o:4f} | {e:4f} | {er:4f} | {status}")
 
         if plot:
             # Create the directory if it doesn't exist

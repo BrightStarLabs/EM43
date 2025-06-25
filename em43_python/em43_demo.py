@@ -32,21 +32,15 @@ if stage == "train":
     em43 = EM43(best_rule, best_prog)
     em43.infer()
     print("\n------------------------------")
-    print("\nEvaluate from the best genome...")
-    em43.evaluate()
-    print("\n------------------------------")
-    
+    stage = "evaluate"
 
-if stage == "infer":
+elif stage == "infer":
     print("\n------------------------------")
     print("\nInfer from the best genome by loading it from best_genome.pkl...")
     em43 = EM43()
     em43.load_genome()
     em43.infer()
-    print("\n------------------------------")
-    print("\nEvaluate from the best genome...")
-    em43.evaluate()
-    print("\n------------------------------")
+    stage = "evaluate"
 
 if stage == "evaluate":
     print("\n------------------------------")
