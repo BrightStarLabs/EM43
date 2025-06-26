@@ -54,10 +54,9 @@ class EM43:
         self.batcher = None
         self.expected = None
         self.fit = None
-        self.project_root = Path(__file__).parent
-        self.plot_dir = self.project_root.parent / Path("plots")
+        self.project_root = Path(__file__).parent.parent
+        self.plot_dir = self.project_root / Path("plots")
 
-        
         # Initialize simulator only if rule and prog are provided
         if self.pop_rule is not None and self.pop_prog is not None:
             self._initialize_simulator()
@@ -81,8 +80,10 @@ class EM43:
             full_path = self.project_root / Path("dp_checkpoints/best_genome.pkl")
         
         # Create the directory if it doesn't exist
-        full_path.parent.mkdir(parents=True, exist_ok=True)
-        
+        #full_path.parent.mkdir(parents=True, exist_ok=True)
+        if not full_path.is_file():
+            raise FileNotFoundError(f"Genome file not found at {full_path}")
+
         try:
             with full_path.open("rb") as f:
                 data = pickle.load(f)
@@ -100,9 +101,6 @@ class EM43:
             print(data)
             self._initialize_simulator()
             print(f"Loaded genome (prog len={len(self.pop_prog)}) from {full_path.name}")
-        except FileNotFoundError:
-            print(f"Error: Genome file not found at {full_path}")
-            sys.exit(1)
         except Exception as e:
             print(f"Error loading genome: {e}")
             sys.exit(1)

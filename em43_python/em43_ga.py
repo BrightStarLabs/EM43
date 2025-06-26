@@ -52,7 +52,7 @@ class GenomeAlgorithm:
         
         # Checkpointing
         self.CHECK_EVERY = args.check_every
-        self.SAVE_DIR = Path(args.save_dir)
+        self.SAVE_DIR = Path(args.save_dir) if args.save_dir else Path(__file__).parent.parent / Path("dp_checkpoints")
         
         # Derived parameters
         self.N_ELITE = int(math.ceil(self.ELITE_FRAC * self.POP_SIZE))

@@ -4,6 +4,7 @@ from pathlib import Path
 import sys
 import numpy as np
 from datetime import datetime
+import os
 
 # Type conversion dictionary
 TYPE_MAP = {
@@ -15,10 +16,13 @@ TYPE_MAP = {
 
 # Load configuration from YAML file
 CONFIG_FILE = Path(__file__).parent / 'config.yaml'
+SETUP_DIR = Path(__file__).parent.parent / "setup" 
 
 try:
     with open(CONFIG_FILE, 'r') as f:
         config = yaml.safe_load(f)
+    os.makedirs(SETUP_DIR, exist_ok=True)
+
 except FileNotFoundError:
     print(f"Error: Configuration file {CONFIG_FILE} not found")
     sys.exit(1)
@@ -89,7 +93,7 @@ def get_args():
     
     # Create timestamped copy of config
     timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-    copy_filename = f"setup_{timestamp}.yaml"
+    copy_filename = SETUP_DIR / f"setup_{timestamp}.yaml"
     
     # Create a new config structure that matches the original format
     updated_config = {}
