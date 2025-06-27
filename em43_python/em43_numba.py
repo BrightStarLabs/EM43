@@ -15,7 +15,6 @@ Key details
 
 No bit-packing; all arrays are `uint8`.  First & last columns stay blank.
 
-Author: Giacomo Bocchese - with the help of ChatGPT
 
 this code has not been checked - may still present unexpected behaviours
 """
