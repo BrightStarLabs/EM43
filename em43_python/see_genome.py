@@ -10,7 +10,6 @@ see_genome.py  -  Dump a trained EM-4/3 genome as pure numbers
 Run:
     python see_genome.py
 
-Author: Giacomo Bocchese - with the help of ChatGPT
 
 this code has not been checked - may still present unexpected behaviours
 """
