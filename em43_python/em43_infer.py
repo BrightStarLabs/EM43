@@ -11,7 +11,6 @@ Example
     python em43_infer.py          # tests 1..10
     python em43_infer.py 17       # tests just 17
 
-Author: Giacomo Bocchese - with the help of ChatGPT
 
 this code has not been checked - may still present unexpected behaviours
 """
