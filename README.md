@@ -1,102 +1,116 @@
 # EM43 - Emergent Model with 4 States
 
 ## Overview
-EM43 is an implementation of an [emergent model (EM)](https://new.researchhub.com/fund/4130/emergent-models-a-general-modeling-framework-as-an-alternative-to-neural-networks) featuring 4 states and a neighborhood of 3 cells. This project provides both training and inference capabilities for EM models with the following characteristics:
+EM43 is an implementation of an [emergent model (EM)](https://new.researchhub.com/fund/4130/emergent-models-a-general-modeling-framework-as-an-alternative-to-neural-networks) featuring 4 states and a neighborhood of 3 cells.
 
-- **Architecture**: 1-D EM
-- **States**: 4 distinct states (0-3)
-- **Neighborhood**: Radius-1 neighborhood (3 cells)
-- **Boundary Conditions**: Open boundary conditions with 2-cell separator "BB"
-- **Optimization**: Numba-accelerated parallel processing for efficient computation
-
-Test the online web app to inference our model: [EM43 viewer](https://bocchesegiacomo.github.io/em43viewer/)
-
-The project includes three main components:
-1. `em43_numba.py`: Core simulation engine with Numba-accelerated parallel processing
-2. `em43_numba_ga.py`: Genetic Algorithm implementation for training the model
-3. `eval_best_model.py`: Evaluates best model after training.
-4. `em43.html`: minimal HTML interface for evaluation purposes.
-
-![image](https://github.com/user-attachments/assets/1896338b-246c-445e-8029-a5c83f8641d5)
-
-
-## Important note
-
-This is a **minimal working implementation** of the EM framework. Some advanced features described in the original paper such as **meta-learning**, **inductive biases**, and **state retention**—are **not yet implemented**.
-
-During training, programs operate on a **fixed-length tape** (`width` parameter), and the total number of computational steps is bounded (`max_steps` parameter). This constraint ensures efficient evaluation and keeps the optimization fast and parallelizable.
-
-In contrast, the **inference interface (HTML visualization)** supports a **dynamically extending tape**, allowing for longer and more complex computations during testing or demonstration. This separation allows the model to learn a general algorithm within a bounded window and then test its **generalization capabilities** to arbitrary input lengths during inference.
-
-The html interface needs the rules and the program to be manually transferred into the js code.
-
-The c++ code is for faster training, as of now it's slightly faster then python numba (approx 1.5x).
-In future updates of this repo we'll include also the c++ tutorial for installation.
+## Features
+- Parallel processing using Numba's `prange` for significant speed improvements
+- Random-Immigrant Strategy for maintaining genetic diversity
+- Detailed telemetry tracking including average Hamming distance
+- Configurable parameters through YAML configuration
+- Command-line interface with argument parsing
+- Class-based API for programmatic use
+- Checkpoint saving for training resumption
 
 ## Installation
-
 ### Prerequisites
 - Python 3.11 or higher 
 
 ### Setup
 1. Clone the repository:
 ```bash
-git clone [repository-url](https://github.com/BrightStarLabs/EM43.git)
+git clone https://github.com/BrightStarLabs/EM43.git
 cd EM43
 ```
 2. Create a virtual environment:
 ```bash
+uv venv .venv --prompt em43 
+# or  
 python -m venv .venv --prompt em43
 source .venv/bin/activate
 ```
 3. Install dependencies:
 ```bash
+uv pip install -r requirements.txt
+# or 
 pip install -r requirements.txt
 ```
 
-The project requires the following Python packages:
-- numpy: For numerical computations
-- numba: For just-in-time compilation and parallel processing
-- tqdm: For progress bars during training
-- matplotlib: For visualization of results
+## Demo Usage
 
-## Usage
+The EM-4/3 demo provides three main stages of operation:
 
-### Training
-To train the model using the Genetic Algorithm:
+### 1. Full Training Mode
 ```bash
-python em43_numba_ga.py
+python em43_python/em43_demo.py
+```
+Runs all stages sequentially:
+1. Trains the model for the specified number of generations
+2. Saves the best genome
+3. Runs inference on the best genome
+4. Evaluates the model's performance
+
+### 2. Inference Mode
+```bash
+python em43_python/em43_demo.py --stage infer
+```
+Starts from inference using the saved best genome and continues to evaluation.
+
+### 3. Evaluation Mode
+```bash
+python em43_python/em43_demo.py --stage evaluate
+```
+Directly evaluates the saved best genome.
+
+### Custom Configuration
+You can customize the training process using various command-line arguments:
+```bash
+python em43_python/em43_demo.py --help
 ```
 
-The training process will:
-- Initialize a population of candidate solutions
-- Evaluate fitness using parallel processing
-- Evolve the population using genetic operators
-- Track progress with detailed telemetry
-- Save checkpoints periodically
+Key parameters include:
+- `--pop_size`: Population size for the genetic algorithm
+- `--generations`: Number of generations to run
+- `--mut_rule`: Rule mutation rate
+- `--mut_prog`: Program mutation rate
+- `--prog_len`: Program length
+- `--window`: Simulation window size
+- `--max_steps`: Maximum steps in simulation
+- `--halt_thresh`: Halt threshold for simulation
 
-### Inference
-To run inference on trained models:
+### Example Usage
 ```bash
-python em43_numba.py
+# Run full training with custom parameters
+python em43_python/em43_demo.py --pop_size 10000 --generations 200
+
+# Run inference only using saved model
+python em43_python/em43_demo.py --stage infer
+
+# Evaluate saved model only
+python em43_python/em43_demo.py --stage evaluate
 ```
 
-The inference engine provides fast evaluation of trained models on input data.
+### Output
+The demo generates two visualization files:
+- `prediction_plot.png`: Shows expected vs predicted outputs
+- `program_colors.png`: Visualizes the program colormap
 
-## Features
-- Parallel processing using Numba's `prange` for significant speed improvements
-- Random-Immigrant Strategy for maintaining genetic diversity
-- Detailed telemetry tracking including average Hamming distance
-- Configurable parameters for population size, generations, and mutation rates
-- Checkpoint saving for training resumption
+The evaluation output provides several key metrics:
+- Stored fitness: The fitness score from training
+- Avg |err|: Average absolute error
+- Success rate: Percentage of outputs within 0.1 of expected
+- Accuracy: Percentage of exact matches
+- Program visualization: Shows the learned program rules
+- Input/Output table: Detailed comparison of actual vs expected outputs
 
 ## Configuration
-Key hyperparameters can be configured in `em43_numba_ga.py`:
-- `POP_SIZE`: Population size (default: 20000)
-- `N_GENERATIONS`: Number of generations (default: 300)
-- `WINDOW`: Tape length (default: 200)
-- `MAX_STEPS`: Maximum simulation steps (default: 800)
-
+The main configuration file is `em43_python/config.yaml`, which contains all hyperparameters organized into sections:
+- Population parameters
+- Mutation rates
+- Regularization
+- Simulation parameters
+- Checkpoint settings
+- Input/output configuration
 
 ## Warranty
 This software is provided "as is" without warranty of any kind, express or
@@ -106,6 +120,3 @@ authors or copyright holders be liable for any claim, damages or other
 liability, whether in an action of contract, tort or otherwise, arising from,
 out of or in connection with the software or the use or other dealings in the
 software.
-
-The software is experimental and may present unexpected behaviors. Users are
-advised to test thoroughly before using in production environments.

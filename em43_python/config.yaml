@@ -1,0 +1,99 @@
+population:
+  pop_size:
+    short: -p
+    type: int
+    value: 20000
+    help: 'Number of genomes in the population (default: 20000)'
+  generations:
+    short: -g
+    type: int
+    value: 300
+    help: 'Number of generations to run (default: 300)'
+  elite_frac:
+    short: -e
+    type: float
+    value: 0.1
+    help: 'Fraction of population to keep as elite (default: 0.1)'
+  tourney_k:
+    short: -k
+    type: int
+    value: 3
+    help: 'Number of genomes to select for tournament (default: 3)'
+
+mutation:
+  mut_rule:
+    short: -r
+    type: float
+    value: 0.03
+    help: 'Probability of mutating each rule entry (default: 0.03)'
+  mut_prog:
+    short: -m
+    type: float
+    value: 0.08
+    help: 'Probability of mutating each program cell (default: 0.08)'
+  prog_len:
+    short: -l
+    type: int
+    value: 10
+    help: 'Length of the program sequence (default: 10)'
+
+regularization:
+  lambda_p:
+    short: -a
+    type: float
+    value: 0.01
+    help: 'Sparsity penalty coefficient (default: 0.01)'
+  random_immigrants:
+    short: -i
+    type: float
+    value: 0.2
+    help: 'Probability of introducing random immigrants (default: 0.2)'
+  complex_telemetry:
+    short: -c
+    type: int
+    value: 30
+    help: 'Frequency of detailed telemetry (in generations) (default: 30)'
+
+simulation:
+  window:
+    short: -w
+    type: int
+    value: 200
+    help: 'Tape length for simulation (default: 200)'
+  max_steps:
+    short: -s
+    type: int
+    value: 800
+    help: 'Maximum simulation steps (default: 800)'
+  halt_thresh:
+    short: -t
+    type: float
+    value: 0.50
+    help: 'Threshold for early stopping (default: 0.50)'
+
+checkpoint:
+  check_every:
+    short: -f
+    type: int
+    value: 50
+    help: 'Frequency of checkpoint saving (default: 50)'
+  save_dir:
+    short: -d
+    type: str
+    value: dp_checkpoints
+    help: 'Directory for checkpoints (default: dp_checkpoints)'
+
+input_output:
+  input_set:
+    short: -x
+    type: str
+    value: 'np.arange(1, 31)'
+    help: 'Input range expression (e.g. "np.arange(1, 31)")'
+  target_out:
+    short: -y
+    type: str
+    value: 'np.arange(1, 31) * 2'
+    help: 'Target output expression (e.g. "np.arange(1, 31) * 2")'
+
+# Default configuration file path
+config_file: config.yaml

@@ -5,5 +5,8 @@ __pycache__
 
 # data
 dp_checkpoints
-*.pkl
+models/*.pkl
 outputs/*.png
+setup_*.yaml
+best_genome.pkl
+plots/*.png
