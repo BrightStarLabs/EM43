@@ -10,8 +10,6 @@ EM-4/3 GA - fast vectorised edition (May 2025)
 
 Drop-in usage: `python em43_numba_ga.py`
 
-Author: Giacomo Bocchese - with the help of ChatGPT
-
 this code has not been checked - may still present unexpected behaviours
 """
 
