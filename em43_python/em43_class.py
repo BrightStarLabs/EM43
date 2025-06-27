@@ -7,8 +7,6 @@ A class-based implementation of the EM43 model featuring:
 - Radius-1 neighborhood (3 cells)
 - Numba-accelerated parallel processing
 - Configurable parameters through YAML
-
-Author: Giacomo Bocchese - with the help of ChatGPT
 """
 
 from __future__ import annotations
