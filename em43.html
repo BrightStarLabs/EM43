@@ -55,22 +55,22 @@ input[type="number"]{padding:4px;border:1px solid #bbb;border-radius:3px;width:6
 
   <h3>Tape Structure: Program & Separator</h3>
   <p>The initial state of the automaton (the tape) is constructed as follows:</p>
-  <pre><code>[program] BB 0^(n+1) R 0</code></pre>
+  <pre><code>[program] 00 0^(n+1) R 0</code></pre>
   <p>The program is a sequence of fixed length (in this model: 32 cells) placed at the beginning of the tape.<br>
   During training, this program is searched/optimized.</p>
-  <p>The separator <code>BB</code> acts as a clear boundary between program and input.</p>
+  <p>The separator <code>00</code> acts as a clear boundary between program and input.</p>
   <p>The encoded input is placed after the separator: it consists of n+1 zeroes, followed by a red marker <code>R</code>, and a trailing 0.</p>
   <p>This structure is critical: the automaton's computation unfolds starting from this initialized state, processing the interaction between the program, the input beacon, and the evolving cell dynamics.</p>
 
   <h3>Encoding the Input</h3>
   <p>To provide an input number <code>n</code>, the tape is initialized as:<br>
-  <code>[program] BB 0^(n+1) R 0</code><br>
+  <code>[program] 00 0^(n+1) R 0</code><br>
   This creates a <strong>beacon</strong>, where the number of <code>0</code>s before the <code>R</code> encodes the value <code>n</code>.</p>
 
   <h3>Decoding the Output</h3>
   <p>The automaton halts when <strong>blue (<code>B</code>) cells occupy ≥50% of the non-blank tape</strong>.<br>
   The <strong>rightmost <code>R</code></strong> is located, and the output is decoded by:</p>
-  <pre><code>output = position(R) − position(last B) − 2</code></pre>
+  <pre><code>output = position(R) − position(separator_end) − 1</code></pre>
   <p>This mirrors the encoding procedure.</p>
 
   <h3>Training</h3>
@@ -99,7 +99,7 @@ const lut=(l,c,r)=>(l<<4)|(c<<2)|r;
 /* helpers --------------------------------------------------------------- */
 function initTape(n,pad=64){
   return Uint8Array.from([
-    ...PROG,3,3,...Array(n+1).fill(0),2,0,...Array(pad).fill(0)
+    ...PROG,0,0,...Array(n+1).fill(0),2,0,...Array(pad).fill(0)
   ]);
 }
 const step=row=>{
@@ -112,10 +112,8 @@ const halted=row=>{
   return live&&b/live>=.5;
 };
 const lastLive=row=>{for(let i=row.length-1;i>=0;i--) if(row[i])return i;return -1;};
-const lastBlue=row=>{
-  for(let i=1;i<row.length;i++) if(row[i-1]===3&&row[i]===3) return i;
-  return -1;
-};
+// Reference position: start of input data (right after [program] 00)
+const getInputStart = () => PROG.length + 2; // 32 + 2 = 34
 
 /* DOM refs -------------------------------------------------------------- */
 const cvs=document.getElementById("cv"), ctx=cvs.getContext("2d");
@@ -123,18 +121,17 @@ const zoomRange=document.getElementById("zoom");
 const tooltip=document.getElementById("tooltip");
 const wrap=document.getElementById("wrap"), out=document.getElementById("out");
 
-let trace=[], cell=12, xLastB=-1;
+let trace=[], cell=12, xRef=-1;
 
 /* main ------------------------------------------------------------------ */
 function run(n){
   wrap.style.display="block"; out.textContent="computing…";
-  setTimeout(()=>{
-    const t0=performance.now();
-    let tape=initTape(n), steps=0; trace=[]; xLastB=-1;
-    const MAX=15000;
+      setTimeout(()=>{
+      const t0=performance.now();
+      let tape=initTape(n), steps=0; trace=[]; xRef=getInputStart();
+      const MAX=15000;
     while(steps<MAX){
       trace.push(tape);
-      if(xLastB<0) xLastB=lastBlue(tape);
       if(halted(tape)) break;
       if(lastLive(tape)>=tape.length-2) tape=Uint8Array.from([...tape,...Array(64).fill(0)]);
       tape=step(tape); steps++;
@@ -145,7 +142,9 @@ function run(n){
     draw();
     /* decode */
     const rIdx=tape.lastIndexOf(2);
-    const pred=(rIdx>=0&&xLastB>=0)? rIdx-xLastB-2 : null;
+    // Decode: position of R relative to input start, minus 1 for the encoding offset
+    const inputStart = getInputStart();
+    const pred=(rIdx>=0)? rIdx - inputStart - 1 : null;
     const ms=(performance.now()-t0).toFixed(1);
     out.textContent=
 `n          : ${n}
@@ -167,8 +166,8 @@ function draw(){
 
   /* ruler */
   ctx.fillStyle="#333"; ctx.font=`${cell-2}px monospace`;
-  for(let x=xLastB+2, rel=0; x<W; x++, rel++){
-    if(rel%5===0){
+  for(let x=xRef, rel=-1; x<W; x++, rel++){
+    if(rel%5===0 && rel>=0){
       ctx.fillText(rel, x*cell+2, cell-4);
       ctx.strokeStyle="#ddd";
       ctx.beginPath();ctx.moveTo(x*cell,cell);ctx.lineTo(x*cell,cvs.height);ctx.stroke();
@@ -180,10 +179,10 @@ function draw(){
     row.forEach((v,x)=>{ctx.fillStyle=COLORS[v];ctx.fillRect(x*cell,yPix,cell,cell);});
   }
   /* reference line */
-  if(xLastB>=0){
-    const xRef=(xLastB+2)*cell;
+  if(xRef>=0){
+    const xRefLine=(xRef+1)*cell;
     ctx.strokeStyle="#444"; ctx.setLineDash([6,4]);
-    ctx.beginPath();ctx.moveTo(xRef,0);ctx.lineTo(xRef,cvs.height);ctx.stroke();
+    ctx.beginPath();ctx.moveTo(xRefLine,0);ctx.lineTo(xRefLine,cvs.height);ctx.stroke();
     ctx.setLineDash([]);
   }
 }
@@ -197,7 +196,7 @@ cvs.onmousemove=e=>{
   if(y<0||y>=trace.length||x<0||x>=trace[0].length){
     tooltip.style.display="none";return;
   }
-  tooltip.textContent=`rel ${x-xLastB-2}`;
+  tooltip.textContent=`rel ${x-xRef-1}`;
   tooltip.style.left=(e.clientX+12)+"px";
   tooltip.style.top =(e.clientY+12)+"px";
   tooltip.style.display="block";

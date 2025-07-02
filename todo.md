@@ -1,0 +1,7 @@
+- associate ids with task automatically
+- add number of trials saving
+- add random search for programs
+- add confirmation y/n for saving task or not + warning message
+- add KC regularization + time penalty
+- save fitness and fitness with penalty separately
+- use weights and biases for logging instead of csv

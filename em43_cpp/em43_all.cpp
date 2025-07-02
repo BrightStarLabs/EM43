@@ -62,7 +62,7 @@ int simulate_single(const Rule& rule, const Programme& prog, int n_in, const Sim
     std::vector<std::uint8_t> cur(N, 0), nxt(N, 0), frozen(N, 0);
 
     std::copy(prog.begin(), prog.end(), cur.begin());
-    cur[L] = cur[L+1] = S_B;
+    cur[L] = cur[L+1] = S_BLANK;  // separator changed from S_B to S_BLANK
     std::size_t r_idx = L + 2 + static_cast<std::size_t>(n_in) + 1;
     if (r_idx >= N) return -10;
     cur[r_idx] = S_R;

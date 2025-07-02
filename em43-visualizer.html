@@ -1,0 +1,454 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>EM43 Visualizer - Trained Models</title>
+<style>
+body{font-family:sans-serif;background:#fafafa;margin:1.2rem}
+h1{margin:.2rem 0 .8rem;color:#333}
+h3{color:#333;margin:1.5rem 0 1rem}
+.tagline{color:#666;margin-bottom:1.5rem;font-size:1.1rem}
+.description{max-width:800px;line-height:1.6;color:#444}
+.description p{margin:.8rem 0}
+.description ul{margin:.8rem 0;padding-left:1.5rem}
+.description code{background:#eee;padding:.2rem .4rem;border-radius:3px}
+#ctrl{display:flex;gap:1rem;flex-wrap:wrap;align-items:center;margin-bottom:1rem}
+canvas{border:1px solid #555;display:block}
+#wrap{max-width:100%;overflow:auto;margin-bottom:.6rem;display:none}
+#out{white-space:pre;font-weight:bold;margin-top:.4rem}
+.btn{padding:4px 10px;background:#1665c1;color:#fff;border:none;border-radius:3px;cursor:pointer}
+.btn:hover{background:#0d4c95}
+input[type="number"]{padding:4px;border:1px solid #bbb;border-radius:3px;width:6rem}
+select{padding:4px;border:1px solid #bbb;border-radius:3px;min-width:12rem}
+#tooltip{position:absolute;background:rgba(0,0,0,.8);color:#fff;font-size:12px;
+  padding:5px 8px;border-radius:3px;pointer-events:none;display:none;z-index:10}
+.loading{color:#666;font-style:italic}
+.error{color:#c11616;font-weight:bold}
+.model-info{background:#f0f0f0;padding:8px;border-radius:3px;margin-bottom:1rem;font-size:0.9rem}
+</style>
+</head>
+<body>
+<h1>EM43 Visualizer - Trained Models</h1>
+<p class="tagline">Visualize and test different trained EM43 models from the training log.</p>
+
+<div id="loading" class="loading">Loading models from log.csv...</div>
+<div id="error" class="error" style="display:none"></div>
+<div id="fileInput" style="display:none">
+  <p>Could not auto-load log.csv. Please select the file manually:</p>
+  <input type="file" id="csvFile" accept=".csv" style="margin-bottom:1rem">
+  <button id="loadBtn" class="btn">Load CSV</button>
+</div>
+
+<div id="ctrl" style="display:none">
+  <label>
+    Model: <select id="modelSelect"></select>
+  </label>
+  n = <input id="nVal" type="number" min="0" value="4">
+  <button id="runBtn" class="btn">run</button>
+  <label style="margin-left:1rem">
+    zoom <input id="zoom" type="range" min="4" max="40" value="12">
+  </label>
+</div>
+
+<div id="modelInfo" class="model-info" style="display:none"></div>
+<div id="instruction" style="font-size: 0.9rem; color: #666; margin-bottom: 1rem; display:none;">run to execute the simulation</div>
+
+<div id="wrap"><canvas id="cv"></canvas></div>
+<div id="out"></div>
+<div id="tooltip"></div>
+
+<div class="description">
+  <h3>About This Visualizer</h3>
+  <p>This tool loads trained EM43 models from the training log and allows you to test them interactively.</p>
+  <p>Each model was trained using genetic algorithms to solve specific computational tasks. Select a model from the dropdown to see its program, rule, and performance.</p>
+  
+  <h3>How to Use</h3>
+  <ul>
+    <li>The tool will try to auto-load <code>log.csv</code>. If that fails, manually select the CSV file</li>
+    <li>Select a trained model from the dropdown menu</li>
+    <li>Enter an input number <code>n</code></li>
+    <li>Click "run" to see the cellular automaton in action</li>
+    <li>Hover over the visualization to see relative positions</li>
+  </ul>
+  
+  <p><strong>Note:</strong> For automatic CSV loading, serve this page via HTTP (e.g., <code>python -m http.server</code> in the directory).</p>
+
+  <h3>Tape Structure</h3>
+  <p>All models use the same encoding: <code>[program] 00 0^(n+1) R 0</code></p>
+  <p>The relative position ruler shows positions relative to the start of the input data (after the program and separator).</p>
+</div>
+
+<script>
+/* Global variables for current model */
+let currentProg = [];
+let currentRule = new Uint8Array(64);
+let models = [];
+let selectedModel = null;
+
+/* Constants */
+const COLORS = ["#fff", "#000", "#ff2222", "#1665c1"];
+const lut = (l, c, r) => (l << 4) | (c << 2) | r;
+
+/* Load and parse CSV data */
+async function loadModels() {
+  try {
+    const response = await fetch('log.csv');
+    if (!response.ok) throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+    
+    const csvText = await response.text();
+    processCSVData(csvText);
+    
+  } catch (error) {
+    // CORS error or file not found - show file input fallback
+    document.getElementById('loading').style.display = 'none';
+    document.getElementById('fileInput').style.display = 'block';
+    
+    // Set up file input handler
+    document.getElementById('loadBtn').onclick = () => {
+      const fileInput = document.getElementById('csvFile');
+      const file = fileInput.files[0];
+      
+      if (!file) {
+        alert('Please select a CSV file first');
+        return;
+      }
+      
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        try {
+          processCSVData(e.target.result);
+          document.getElementById('fileInput').style.display = 'none';
+        } catch (err) {
+          document.getElementById('error').style.display = 'block';
+          document.getElementById('error').textContent = `Error parsing CSV: ${err.message}`;
+        }
+      };
+      reader.readAsText(file);
+    };
+  }
+}
+
+/* Process CSV data (common function for both fetch and file input) */
+function processCSVData(csvText) {
+  const lines = csvText.trim().split('\n');
+  const headers = lines[0].split(',').map(h => h.trim().replace(/\r/g, ''));
+  
+  console.log('CSV Headers (cleaned):', headers);
+  console.log('Total lines:', lines.length);
+  
+  // Parse CSV and group by run_id, keeping only the latest checkpoint for each run
+  const runData = {};
+  
+  for (let i = 1; i < lines.length; i++) {
+    const line = lines[i].trim();
+    if (!line) continue;
+    
+    try {
+      // Parse CSV line (handle quoted fields with commas)
+      const values = parseCSVLine(line);
+      
+      if (values.length !== headers.length) {
+        console.warn(`Line ${i} has ${values.length} values but expected ${headers.length}`);
+        continue;
+      }
+      
+      const row = {};
+      headers.forEach((header, idx) => {
+        row[header] = values[idx];
+      });
+      
+      if (!row.program || !row.rule) {
+        console.warn(`Line ${i}: Missing program or rule data - program: "${row.program}", rule: "${row.rule}"`);
+        continue;
+      }
+      
+      const runId = row.run_id;
+      const checkpoint = parseInt(row.checkpoint);
+      
+      if (!runData[runId] || checkpoint > runData[runId].checkpoint) {
+        runData[runId] = {
+          runId,
+          checkpoint,
+          taskId: row.task_id,
+          taskDescription: row.task_description,
+          initialFitness: parseFloat(row.initial_fitness),
+          finalFitness: parseFloat(row.final_fitness),
+          program: row.program.split(',').map(Number),
+          rule: row.rule.split(',').map(Number)
+        };
+      }
+      
+    } catch (error) {
+      console.error(`Error processing line ${i}:`, error);
+      console.error(`Line content: "${line}"`);
+      continue;
+    }
+  }
+  
+  const modelCount = Object.keys(runData).length;
+  console.log('Successfully processed models:', modelCount);
+  
+  if (modelCount === 0) {
+    throw new Error('No valid models found in CSV data');
+  }
+  
+  models = Object.values(runData);
+  populateModelSelect();
+  
+  console.log('Available models:', models.map(m => `${m.runId} (${m.taskDescription})`));
+  document.getElementById('ctrl').style.display = 'flex';
+}
+
+/* Robust CSV parser that handles quoted fields and edge cases */
+function parseCSVLine(line) {
+  const result = [];
+  let current = '';
+  let inQuotes = false;
+  let i = 0;
+  
+  while (i < line.length) {
+    const char = line[i];
+    
+    if (char === '"') {
+      if (inQuotes && line[i + 1] === '"') {
+        // Handle escaped quotes ("")
+        current += '"';
+        i += 2;
+        continue;
+      } else {
+        // Toggle quote state
+        inQuotes = !inQuotes;
+      }
+    } else if (char === ',' && !inQuotes) {
+      // Field separator
+      result.push(current.trim());
+      current = '';
+    } else {
+      current += char;
+    }
+    i++;
+  }
+  
+  // Add the last field
+  result.push(current.trim());
+  
+  // Clean up: remove surrounding quotes only if they wrap the entire field
+  return result.map(val => {
+    val = val.trim();
+    if (val.startsWith('"') && val.endsWith('"') && val.length >= 2) {
+      return val.slice(1, -1);
+    }
+    return val;
+  });
+}
+
+/* Populate model selection dropdown */
+function populateModelSelect() {
+  const select = document.getElementById('modelSelect');
+  select.innerHTML = '<option value="">Select a model...</option>';
+  
+  models.forEach((model, idx) => {
+    const option = document.createElement('option');
+    option.value = idx;
+    option.textContent = `${model.runId} (cp${model.checkpoint}) - ${model.taskDescription}`;
+    select.appendChild(option);
+  });
+  
+  select.onchange = () => {
+    if (select.value !== '') {
+      selectModel(parseInt(select.value));
+    }
+  };
+}
+
+/* Select and load a model */
+function selectModel(modelIdx) {
+  selectedModel = models[modelIdx];
+  currentProg = selectedModel.program;
+  currentRule = new Uint8Array(selectedModel.rule);
+  
+  // Update model info display
+  const info = document.getElementById('modelInfo');
+  info.style.display = 'block';
+  info.innerHTML = `
+    <strong>Model:</strong> ${selectedModel.runId} (checkpoint ${selectedModel.checkpoint})<br>
+    <strong>Task:</strong> ${selectedModel.taskDescription}<br>
+    <strong>Program length:</strong> ${currentProg.length} cells<br>
+    <strong>Fitness:</strong> ${selectedModel.initialFitness.toFixed(3)} → ${selectedModel.finalFitness.toFixed(3)}
+  `;
+  
+  document.getElementById('instruction').style.display = 'block';
+  
+  // Clear any previous visualization
+  document.getElementById('wrap').style.display = 'none';
+  document.getElementById('out').textContent = '';
+}
+
+/* Helper functions - flexible for any program length */
+function getInputStart() {
+  return currentProg.length + 2; // program + 00 separator
+}
+
+function initTape(n, pad = 64) {
+  return Uint8Array.from([
+    ...currentProg, 0, 0, ...Array(n + 1).fill(0), 2, 0, ...Array(pad).fill(0)
+  ]);
+}
+
+const step = row => {
+  const N = row.length, nxt = new Uint8Array(N);
+  for (let i = 1; i < N - 1; i++) {
+    nxt[i] = currentRule[lut(row[i - 1], row[i], row[i + 1])];
+  }
+  return nxt;
+};
+
+const halted = row => {
+  let live = 0, b = 0;
+  row.forEach(v => { if (v) { live++; if (v === 3) b++; } });
+  return live && b / live >= 0.5;
+};
+
+const lastLive = row => {
+  for (let i = row.length - 1; i >= 0; i--) if (row[i]) return i;
+  return -1;
+};
+
+/* DOM refs */
+const cvs = document.getElementById("cv"), ctx = cvs.getContext("2d");
+const zoomRange = document.getElementById("zoom");
+const tooltip = document.getElementById("tooltip");
+const wrap = document.getElementById("wrap"), out = document.getElementById("out");
+
+let trace = [], cell = 12, xRef = -1;
+
+/* Main simulation function */
+function run(n) {
+  if (!selectedModel) {
+    alert('Please select a model first');
+    return;
+  }
+  
+  wrap.style.display = "block";
+  out.textContent = "computing…";
+  
+  setTimeout(() => {
+    const t0 = performance.now();
+    let tape = initTape(n), steps = 0;
+    trace = [];
+    xRef = getInputStart();
+    const MAX = 15000;
+    
+    while (steps < MAX) {
+      trace.push(tape);
+      if (halted(tape)) break;
+      if (lastLive(tape) >= tape.length - 2) {
+        tape = Uint8Array.from([...tape, ...Array(64).fill(0)]);
+      }
+      tape = step(tape);
+      steps++;
+    }
+    
+    /* unify width */
+    const W = Math.max(...trace.map(r => r.length));
+    trace = trace.map(r => r.length < W ? Uint8Array.from([...r, ...Array(W - r.length).fill(0)]) : r);
+    
+    draw();
+    
+    /* decode */
+    const rIdx = tape.lastIndexOf(2);
+    const inputStart = getInputStart();
+    const pred = (rIdx >= 0) ? rIdx - inputStart - 1 : null;
+    const ms = (performance.now() - t0).toFixed(1);
+    
+    out.textContent = `Model: ${selectedModel.runId} (${selectedModel.taskDescription})
+n          : ${n}
+predicted  : ${pred === null ? "NA" : pred}
+steps      : ${trace.length}
+width      : ${W}
+time (ms)  : ${ms}`;
+  }, 20);
+}
+
+/* Chart drawing */
+function draw() {
+  if (!trace.length) return;
+  cell = parseInt(zoomRange.value);
+  const W = trace[0].length, H = trace.length;
+  cvs.width = W * cell;
+  cvs.height = (H + 1) * cell;
+  ctx.fillStyle = "#fafafa";
+  ctx.fillRect(0, 0, cvs.width, cvs.height);
+
+  /* ruler */
+  ctx.fillStyle = "#333";
+  ctx.font = `${cell - 2}px monospace`;
+  for (let x = xRef, rel = -1; x < W; x++, rel++) {
+    if (rel % 5 === 0 && rel >= 0) {
+      ctx.fillText(rel, x * cell + 2, cell - 4);
+      ctx.strokeStyle = "#ddd";
+      ctx.beginPath();
+      ctx.moveTo(x * cell, cell);
+      ctx.lineTo(x * cell, cvs.height);
+      ctx.stroke();
+    }
+  }
+  
+  /* rows */
+  for (let y = 0; y < trace.length; y++) {
+    const row = trace[y], yPix = (y + 1) * cell;
+    row.forEach((v, x) => {
+      ctx.fillStyle = COLORS[v];
+      ctx.fillRect(x * cell, yPix, cell, cell);
+    });
+  }
+  
+  /* reference line */
+  if (xRef >= 0) {
+    const xRefLine = (xRef + 1) * cell;
+    ctx.strokeStyle = "#444";
+    ctx.setLineDash([6, 4]);
+    ctx.beginPath();
+    ctx.moveTo(xRefLine, 0);
+    ctx.lineTo(xRefLine, cvs.height);
+    ctx.stroke();
+    ctx.setLineDash([]);
+  }
+}
+
+/* Tooltip */
+cvs.onmousemove = e => {
+  if (!trace.length) {
+    tooltip.style.display = "none";
+    return;
+  }
+  const r = cvs.getBoundingClientRect();
+  const x = Math.floor((e.clientX - r.left) / cell);
+  const y = Math.floor((e.clientY - r.top) / cell) - 1;
+  if (y < 0 || y >= trace.length || x < 0 || x >= trace[0].length) {
+    tooltip.style.display = "none";
+    return;
+  }
+  tooltip.textContent = `rel ${x - xRef - 1}`;
+  tooltip.style.left = (e.clientX + 12) + "px";
+  tooltip.style.top = (e.clientY + 12) + "px";
+  tooltip.style.display = "block";
+};
+cvs.onmouseout = () => tooltip.style.display = "none";
+
+/* UI Event Handlers */
+document.getElementById("runBtn").onclick = () => {
+  const n = Math.max(0, +document.getElementById("nVal").value || 0);
+  document.getElementById("instruction").style.display = "none";
+  run(n);
+};
+
+zoomRange.oninput = draw;
+window.onresize = draw;
+
+/* Initialize */
+loadModels();
+</script>
+</body>
+</html> 

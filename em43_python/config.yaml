@@ -2,12 +2,12 @@ population:
   pop_size:
     short: -p
     type: int
-    value: 20000
+    value: 10000
     help: 'Number of genomes in the population (default: 20000)'
   generations:
     short: -g
     type: int
-    value: 300
+    value: 500
     help: 'Number of generations to run (default: 300)'
   elite_frac:
     short: -e
@@ -46,7 +46,7 @@ regularization:
   random_immigrants:
     short: -i
     type: float
-    value: 0.2
+    value: 0.1
     help: 'Probability of introducing random immigrants (default: 0.2)'
   complex_telemetry:
     short: -c
@@ -63,7 +63,7 @@ simulation:
   max_steps:
     short: -s
     type: int
-    value: 800
+    value: 600
     help: 'Maximum simulation steps (default: 800)'
   halt_thresh:
     short: -t
@@ -92,8 +92,42 @@ input_output:
   target_out:
     short: -y
     type: str
-    value: 'np.arange(1, 31) * 2'
+    value: 'np.mod(np.arange(1, 31) * 2, 3)'
     help: 'Target output expression (e.g. "np.arange(1, 31) * 2")'
+
+random_search:
+  enable_rs:
+    short: -rs
+    type: str
+    value: 'false'
+    help: 'Enable random search instead of genetic algorithm (default: false)'
+  rs_seed:
+    short: -seed
+    type: int
+    value: -1
+    help: 'Random seed for reproducible random search (-1 for random seed, default: -1)'
+
+diversity:
+  enable_stochastic_tournament:
+    short: -st
+    type: str
+    value: 'true'
+    help: 'Enable stochastic tournament selection for diversity (default: false)'
+  initial_temperature:
+    short: -temp
+    type: float
+    value: 3
+    help: 'Initial temperature for stochastic selection (higher = less greedy, default: 2.0)'
+  cooling_rate:
+    short: -cool
+    type: float
+    value: 0.99
+    help: 'Temperature cooling rate per generation (default: 0.98)'
+  min_temperature:
+    short: -mintemp
+    type: float
+    value: 0.1
+    help: 'Minimum temperature to maintain diversity (default: 0.1)'
 
 # Default configuration file path
 config_file: config.yaml

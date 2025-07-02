@@ -8,7 +8,7 @@ Public API unchanged:
 
 Key details
 -----------
-* 1-D CA, 4 states, radius-1, open boundary, 2-cell separator “BB”.
+* 1-D CA, 4 states, radius-1, open boundary, 2-cell separator "00".
 * Evaluates **B inputs in parallel** for a single genome.
 * Core simulation loop is compiled with Numba (`@njit(cache=True)`).
 * First call takes a few 100 ms to compile, then runs 5-10x faster.
@@ -29,7 +29,7 @@ def lut_idx(l: int, c: int, r: int) -> int:              # 3-tuple → 0..63
     return (l << 4) | (c << 2) | r
 
 
-SEPARATOR = np.array([3, 3], dtype=np.uint8)             # BB
+SEPARATOR = np.array([0, 0], dtype=np.uint8)             # 00
 
 _IMMUTABLE = {                                           # hard-wired LUT rows
     lut_idx(0, 0, 0): 0,
@@ -88,8 +88,8 @@ def _simulate(rule: np.ndarray,
     for b in range(B):
         for j in range(L):
             state[b, j] = prog[j]
-        state[b, L    ] = 3     # B
-        state[b, L + 1] = 3     # B
+        state[b, L    ] = 0     # separator
+        state[b, L + 1] = 0     # separator
 
     # write beacons 0^(n+1) R 0
     for b in range(B):
@@ -183,7 +183,7 @@ class EM43Batch:
         self.prog  = _sanitize_programme(prog)
         self.L     = len(self.prog)
 
-        if self.L + 5 >= window:             # L + BB + 0 R 0  needs ≥5 extra
+        if self.L + 5 >= window:             # L + 00 + 0 R 0  needs ≥5 extra
             raise ValueError(f"window {window} too small for given programme length {self.L}")
 
         self.N           = window
@@ -213,7 +213,7 @@ def _simulate_two_inputs(rule: np.ndarray,
     """
     Two-input simulation for operations like GCD/LCM.
 
-    Tape structure: [program] BB 0^(a+1) R 0^(b+1) R 0
+    Tape structure: [program] 00 0^(a+1) R 0^(b+1) R 0
 
     Parameters
     ----------
@@ -238,8 +238,8 @@ def _simulate_two_inputs(rule: np.ndarray,
     for b in range(B):
         for j in range(L):
             state[b, j] = prog[j]
-        state[b, L    ] = 3     # B
-        state[b, L + 1] = 3     # B
+        state[b, L    ] = 0     # separator
+        state[b, L + 1] = 0     # separator
 
     # write two beacons: 0^(a+1) R 0^(b+1) R 0
     for b in range(B):
@@ -280,7 +280,7 @@ def _simulate_two_inputs(rule: np.ndarray,
         if not active_any:
             break
 
-    # decode outputs - find rightmost R and decode relative to last BB
+    # decode outputs - find rightmost R and decode relative to last 00
     for b in range(B):
         if not halted[b]:
             continue
@@ -303,7 +303,7 @@ class EM43TwoInputBatch:
     """
     Evaluate a single genome on pairs of inputs for two-input operations like GCD/LCM.
 
-    Tape structure: [program] BB 0^(a+1) R 0^(b+1) R 0
+    Tape structure: [program] 00 0^(a+1) R 0^(b+1) R 0
     """
 
     def __init__(self,
@@ -316,7 +316,7 @@ class EM43TwoInputBatch:
         self.prog  = _sanitize_programme(prog)
         self.L     = len(self.prog)
 
-        # Need more space for two inputs: L + BB + max_a + R + max_b + R + output_space
+        # Need more space for two inputs: L + 00 + max_a + R + max_b + R + output_space
         if self.L + 10 >= window:
             raise ValueError("window too small for given programme length and two inputs")
 

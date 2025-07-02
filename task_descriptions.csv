@@ -1,0 +1,14 @@
+task_id,task_description
+0,undefined
+1,multiply by 2
+2,multiply by 3
+3,multiply by 4
+4,divide by 2
+5,divide by 3
+6,add 1
+7,subtract 1
+8,power of 2
+9,round((power of 2)/4)
+10,modulo 4
+11,x3 mod 8
+12,x2 mod 3

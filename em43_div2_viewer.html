@@ -52,22 +52,22 @@ input[type="number"]{padding:4px;border:1px solid #bbb;border-radius:3px;width:6
 
   <h3>Tape Structure: Program & Separator</h3>
   <p>The initial state of the automaton (the tape) is constructed as follows:</p>
-  <pre><code>[program] BB 0^(n+1) R 0</code></pre>
+  <pre><code>[program] 00 0^(n+1) R 0</code></pre>
   <p>The program is a sequence of fixed length (in this model: 12 cells) placed at the beginning of the tape.<br>
   During training, this program is searched/optimized.</p>
-  <p>The separator <code>BB</code> acts as a clear boundary between program and input.</p>
+  <p>The separator <code>00</code> acts as a clear boundary between program and input.</p>
   <p>The encoded input is placed after the separator: it consists of n+1 zeroes, followed by a red marker <code>R</code>, and a trailing 0.</p>
   <p>This structure is critical: the automaton's computation unfolds starting from this initialized state, processing the interaction between the program, the input beacon, and the evolving cell dynamics.</p>
 
   <h3>Encoding the Input</h3>
   <p>To provide an input number <code>n</code>, the tape is initialized as:<br>
-  <code>[program] BB 0^(n+1) R 0</code><br>
+  <code>[program] 00 0^(n+1) R 0</code><br>
   This creates a <strong>beacon</strong>, where the number of <code>0</code>s before the <code>R</code> encodes the value <code>n</code>.</p>
 
   <h3>Decoding the Output</h3>
   <p>The automaton halts when <strong>only blue (<code>B</code>) cells remain in the active region</strong>.<br>
-  The <strong>rightmost blue cell</strong> is located, and the output is decoded by:</p>
-  <pre><code>output = position(rightmost B) − program_length − separator_length</code></pre>
+  The <strong>rightmost red marker</strong> is located, and the output is decoded by:</p>
+  <pre><code>output = position(rightmost R) − program_length − separator_length − 1</code></pre>
   <p>This spatial encoding allows the result to emerge from the cellular automaton dynamics.</p>
 
   <h3>Training</h3>
@@ -107,10 +107,10 @@ function step(tape){
 /* tape initialization for division by 2 */
 function initTape(n){
   const prog=PROG.slice(); // Program (length 12)
-  const sep=[3,3]; // BB separator
+  const sep=[0,0]; // 00 separator
   // Python: r_idx = L + 2 + inputs[b] + 1, so R is at position L+2+n+1
   // For n=6: R at position 12+2+6+1 = 21
-  // Tape: [prog(12)] [BB] [0^(n+1)] [R] [0] [padding]
+  // Tape: [prog(12)] [00] [0^(n+1)] [R] [0] [padding]
   //       0-11        12-13  14-20     21   22   23+
   const zeros_before_r = Array(n+1).fill(0); // n+1 zeros before R
   const r_and_after = [2, 0]; // R followed by 0
@@ -124,10 +124,8 @@ function lastLive(tape){
   return -1;
 }
 
-function lastBlue(tape){
-  for(let i=tape.length-1;i>=0;i--) if(tape[i]===3) return i;
-  return -1;
-}
+// Reference position: start of input data (right after [program] 00)
+const getInputStart = () => PROG.length + 2; // 12 + 2 = 14
 
 function halted(tape){
   const live=tape.filter(x=>x>0).length;
@@ -146,17 +144,16 @@ const zoomRange=document.getElementById("zoom");
 const tooltip=document.getElementById("tooltip");
 const wrap=document.getElementById("wrap"), out=document.getElementById("out");
 
-let trace=[], cell=12, xLastB=-1;
+let trace=[], cell=12, xRef=-1;
 /* main simulation function */
 function run(n){
   wrap.style.display="block"; out.textContent="computing…";
-  setTimeout(()=>{
-    const t0=performance.now();
-    let tape=initTape(n), steps=0; trace=[]; xLastB=-1;
-    const MAX=15000;
-    while(steps<MAX){
-      trace.push(tape.slice()); // Store copy of current state
-      if(xLastB<0) xLastB=lastBlue(tape);
+      setTimeout(()=>{
+      const t0=performance.now();
+      let tape=initTape(n), steps=0; trace=[]; xRef=getInputStart();
+      const MAX=15000;
+      while(steps<MAX){
+        trace.push(tape.slice()); // Store copy of current state
 
       // Check for proper halting condition
       if(halted(tape)) break;
@@ -171,21 +168,21 @@ function run(n){
     /* decode */
     const rIdx=tape.lastIndexOf(2);
 
-    // Find the rightmost blue cell (value 3) in the entire final tape
-    let rightmostBlue = -1;
+    // Find the rightmost red marker (value 2) in the final tape
+    let rightmostRed = -1;
     for (let i = tape.length - 1; i >= 0; i--) {
-      if (tape[i] === 3) {
-        rightmostBlue = i;
+      if (tape[i] === 2) {
+        rightmostRed = i;
         break;
       }
     }
 
-    // Decode based on rightmost blue position
+    // Decode based on rightmost red position relative to input start
     let pred = null;
-    if (rightmostBlue >= 0) {
-      // The result is encoded as: rightmost_blue - (program_length + separator_length)
-      // For n=6: rightmost blue at 17, L=12, separator=2, so 17-(12+2) = 3 ✓
-      pred = rightmostBlue - (PROG.length + 2);
+    if (rightmostRed >= 0) {
+      // Decode: position of R relative to input start, minus 1 for the encoding offset
+      const inputStart = getInputStart();
+      pred = rightmostRed - inputStart - 1;
     }
     const ms=(performance.now()-t0).toFixed(1);
     out.textContent=
@@ -207,8 +204,8 @@ function draw(){
 
   /* ruler */
   ctx.fillStyle="#333"; ctx.font=`${cell-2}px monospace`;
-  for(let x=xLastB+2, rel=0; x<W; x++, rel++){
-    if(rel%5===0){
+  for(let x=xRef, rel=-1; x<W; x++, rel++){
+    if(rel%5===0 && rel>=0){
       ctx.fillText(rel, x*cell+2, cell-4);
       ctx.strokeStyle="#ddd";
       ctx.beginPath();ctx.moveTo(x*cell,cell);ctx.lineTo(x*cell,cvs.height);ctx.stroke();
@@ -220,10 +217,10 @@ function draw(){
     row.forEach((v,x)=>{ctx.fillStyle=COLORS[v];ctx.fillRect(x*cell,yPix,cell,cell);});
   }
   /* reference line */
-  if(xLastB>=0){
-    const xRef=(xLastB+2)*cell;
+  if(xRef>=0){
+    const xRefLine=(xRef+1)*cell;
     ctx.strokeStyle="#444"; ctx.setLineDash([6,4]);
-    ctx.beginPath();ctx.moveTo(xRef,0);ctx.lineTo(xRef,cvs.height);ctx.stroke();
+    ctx.beginPath();ctx.moveTo(xRefLine,0);ctx.lineTo(xRefLine,cvs.height);ctx.stroke();
     ctx.setLineDash([]);
   }
 }
@@ -237,7 +234,7 @@ cvs.onmousemove=e=>{
   if(y<0||y>=trace.length||x<0||x>=trace[0].length){
     tooltip.style.display="none";return;
   }
-  tooltip.textContent=`rel ${x-xLastB-2}`;
+  tooltip.textContent=`rel ${x-xRef-1}`;
   tooltip.style.left=(e.clientX+12)+"px";
   tooltip.style.top =(e.clientY+12)+"px";
   tooltip.style.display="block";
