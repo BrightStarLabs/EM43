@@ -119,7 +119,7 @@ class EM43:
         if self.batcher is None:
             raise ValueError("Model not initialized. Load a genome first: `em43.load_genome()`.")
 
-        if not inputs:  # if no inputs are provided
+        if inputs is None or len(inputs) == 0:  # if no inputs are provided
             inputs = list(range(1, 11))  # default 1..10    
 
         outputs = self.batcher.run(inputs)
@@ -167,7 +167,7 @@ class EM43:
         if self.expected is None:
             raise ValueError("Expected values not initialized. Load a genome first: `em43.load_genome()`.")
         
-        if not inputs:  # if no inputs are provided
+        if inputs is None or len(inputs) == 0:  # if no inputs are provided
             inputs = list(range(1, len(self.expected)+1))  # default 1..10    
 
         outputs = self.batcher.run(inputs)

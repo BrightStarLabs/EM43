@@ -3,11 +3,15 @@ from em43_ga import GenomeAlgorithm
 from em43_class import EM43
 import time
 import numba as nb
+import numpy as np
 
 t0 = time.time()
 args = get_args()
 stage = args.stage
 nb.set_num_threads(nb.config.NUMBA_NUM_THREADS)
+if stage != "train":
+    INPUT_SET = eval(args.input_set, {'np': np})
+    TARGET_OUT = eval(args.target_out, {'np': np})
 
 if stage == "train":
     print("\n------------------------------")
@@ -32,20 +36,23 @@ if stage == "train":
     em43 = EM43(best_rule, best_prog)
     em43.infer()
     print("\n------------------------------")
-    stage = "evaluate"
+    print("\nEvaluate from the best genome...")
+    em43.evaluate()
+    print("\n------------------------------")
 
 elif stage == "infer":
     print("\n------------------------------")
     print("\nInfer from the best genome by loading it from best_genome.pkl...")
     em43 = EM43()
     em43.load_genome()
-    em43.infer()
-    stage = "evaluate"
+    em43.infer(INPUT_SET)
+    print("\n------------------------------")
 
 if stage == "evaluate":
     print("\n------------------------------")
     print("\nEvaluate from the best genome by loading it from best_genome.pkl...")
     em43 = EM43()
     em43.load_genome()
-    em43.evaluate()
+    em43.set_expected(TARGET_OUT)
+    em43.evaluate(INPUT_SET)
     print("\n------------------------------")   
