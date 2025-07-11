@@ -1,0 +1,42 @@
+# EM43 Logger Configuration
+# Configuration for the distributed training data logging system
+
+logging:
+  # Enable/disable logging
+  enabled: true
+  
+  # API endpoint for the logging system
+  api_endpoint: "https://jkk4nk8j9g.execute-api.us-east-1.amazonaws.com/api"
+  
+  # Request timeout in seconds
+  timeout: 20
+  
+  # Model name (always EM43)
+  default_model: "EM43"
+  
+  # Automatic mode detection (1input vs 2input)
+  auto_detect_mode: true
+  
+  # Logging options
+  log_initial: true       # Log initial state (t=0)
+  log_checkpoints: true   # Log at checkpoint saves
+  log_evaluation: true    # Log evaluation results
+  
+  # Debug mode (print full error traces)
+  debug: false
+  
+  # Additional logging features
+  batch_logging: false    # Future: batch multiple logs
+  local_backup: false     # Future: backup logs locally
+  
+# Advanced Configuration (optional)
+advanced:
+  # Retry configuration
+  max_retries: 0          # Number of retries for failed requests
+  retry_delay: 5          # Delay between retries in seconds
+  
+  # Data validation
+  validate_data: true     # Validate data before sending
+  
+  # Compression
+  compress_data: false    # Future: compress large payloads

@@ -1,0 +1,134 @@
+general:
+  complex_telemetry:
+    short: -c
+    type: int
+    value: 3
+    help: 'Frequency of detailed telemetry (in generations) (default: 30)'
+  check_every:
+    short: -f
+    type: int
+    value: 50
+    help: 'Frequency of checkpoint saving (default: 50)'
+  save_dir:
+    short: -d
+    type: str
+    value: dp_checkpoints
+    help: 'Directory for checkpoints (default: dp_checkpoints)'
+
+population:
+  pop_size:
+    short: -p
+    type: int
+    value: 5000
+    help: 'Number of genomes in the population (default: 20000)'
+  generations:
+    short: -g
+    type: int
+    value: 100
+    help: 'Number of generations to run (default: 300)'
+  elite_frac:
+    short: -e
+    type: float
+    value: 0.1
+    help: 'Fraction of population to keep as elite (default: 0.1)'
+  tourney_k:
+    short: -k
+    type: int
+    value: 3
+    help: 'Number of genomes to select for tournament (default: 3)'
+  mut_rule:
+    short: -r
+    type: float
+    value: 0.02
+    help: 'Probability of mutating each rule entry (default: 0.03)'
+  mut_prog:
+    short: -m
+    type: float
+    value: 0.04
+    help: 'Probability of mutating each program cell (default: 0.08)'
+  random_immigrants:
+    short: -i
+    type: float
+    value: 0.1
+    help: 'Probability of introducing random immigrants (default: 0.2)'
+  # Stochastic tournament selection (always enabled)
+  initial_temperature:
+    short: -temp
+    type: float
+    value: 3.0
+    help: 'Initial temperature for stochastic selection (higher = less greedy, default: 2.0)'
+  cooling_rate:
+    short: -cool
+    type: float
+    value: 0.999
+    help: 'Temperature cooling rate per generation (default: 0.98)'
+  min_temperature:
+    short: -mintemp
+    type: float
+    value: 0.8
+    help: 'Minimum temperature to maintain diversity (default: 0.1)'
+  # Diversity penalty (always enabled with bucketing)
+  diversity_penalty_thresholds:
+    short: -dpt
+    type: str
+    value: '[5, 8, 12, 20]'
+    help: 'List of hamming distance thresholds for diversity penalties (default: [4, 10, 20])'
+  diversity_penalty_coefficients:
+    short: -dpc
+    type: str
+    value: '[0.2, 0.1, 0.02, 0.001]'
+    help: 'List of penalty coefficients corresponding to thresholds (default: [0.8, 0.2, 0.05])'
+  diversity_penalty_exclusion_prob:
+    short: -dpep
+    type: float
+    value: 0.001
+    help: 'Probability for an individual to be exempted from diversity penalties (default: 0.005)'
+
+model:
+  prog_len:
+    short: -l
+    type: int
+    value: 20
+    help: 'Length of the program sequence (default: 10)'
+  lambda_p:
+    short: -a
+    type: float
+    value: 0.01
+    help: 'Sparsity penalty coefficient (default: 0.01)'
+  window:
+    short: -w
+    type: int
+    value: 100
+    help: 'Tape length for simulation (default: 200)'
+  max_steps:
+    short: -s
+    type: int
+    value: 200
+    help: 'Maximum simulation steps (default: 800)'
+  halt_thresh:
+    short: -t
+    type: float
+    value: 0.50
+    help: 'Threshold for early stopping (default: 0.50)'
+
+input_output:
+  task_id:
+    short: -tid
+    type: int
+    value: 1
+    help: 'Task ID to load from tasks_config.py (use -1 for custom task)'
+
+evaluation:
+  window:
+    short: -ew
+    type: int
+    value: 10000
+    help: 'Window size for evaluation and inference simulations (default: 10000)'
+  max_steps:
+    short: -es
+    type: int
+    value: 3000
+    help: 'Maximum steps for evaluation and inference simulations (default: 3000)'
+
+# Default configuration file path
+config_file: config.yaml
