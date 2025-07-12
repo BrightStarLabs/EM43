@@ -10,17 +10,33 @@ This test suite validates:
 5. Fitness evaluation and numba integration
 6. End-to-end workflow validation
 7. Error handling and edge cases
+
+IMPORTANT: All training calls explicitly disable API logging
+(checkpoint_callback=None, checkpoint_interval=0) to prevent
+accidental data injection into the database during testing.
 """
 
-import numpy as np
-import yaml
+# Standard library
+import os
 import pickle
 import time
 from pathlib import Path
 from typing import Dict, Any, Tuple
 import warnings
 
-# Import EM43 components
+# Third-party
+import numpy as np
+import yaml
+
+# Ensure imports resolve when executed from project root.
+# ---------------------------------------------------------------------------
+# Switch CWD to the package root so that relative paths (e.g. config.yaml,
+# dp_checkpoints/) remain valid no matter where the test suite is invoked from.
+# ---------------------------------------------------------------------------
+ROOT_DIR = Path(__file__).resolve().parent.parent
+os.chdir(ROOT_DIR)
+
+# Import EM43 components (now that ROOT_DIR is on sys.path implicitly).
 from em43_ga import EM43GA, train_model
 from tasks_config import get_dataset, TASKS, custom_task
 from em43_numba import (
@@ -107,7 +123,7 @@ def test_configuration_system(results: TestResults):
     results.section("Configuration System")
     
     # Test YAML file exists and loads
-    config_path = Path('config.yaml')
+    config_path = ROOT_DIR / 'config.yaml'
     results.test("Config file exists", config_path.exists())
     
     with open(config_path, 'r') as f:
@@ -469,11 +485,11 @@ def test_integration_workflow(results: TestResults):
     
     try:
         # Test complete training workflow
-        best_rule, best_prog, best_fitness, history = train_model(config)
+        best_rule, best_prog, best_fitness, history = train_model(config, checkpoint_callback=None, checkpoint_interval=0)
         results.test("Complete training workflow", True)
         
         # Check if genome file was saved
-        expected_file = Path("dp_checkpoints/best_genome.pkl")
+        expected_file = ROOT_DIR / "dp_checkpoints/best_genome.pkl"
         results.test("Genome file saved", expected_file.exists())
         
         if expected_file.exists():
@@ -748,7 +764,7 @@ def test_evaluation_inference_integration(results: TestResults):
         }
         
         # Train a quick model
-        best_rule, best_prog, best_fitness, history = train_model(quick_config)
+        best_rule, best_prog, best_fitness, history = train_model(quick_config, checkpoint_callback=None, checkpoint_interval=0)
         
         # Create genome data structure
         test_genome = {
@@ -865,7 +881,7 @@ def test_wrapper_system(results: TestResults):
             }
         }
         quick_wrapper = EM43Wrapper(task_id=6, config_overrides=quick_config)
-        rule, prog, fitness, history = quick_wrapper.train(verbose=False, save_genome=False)
+        rule, prog, fitness, history = quick_wrapper.train(verbose=False, save_genome=False, checkpoint_callback=None, checkpoint_interval=0)
         
         results.test("Quick training execution", True)
         results.test("Training returns rule", rule is not None and rule.shape == (64,))
@@ -1007,7 +1023,7 @@ def test_integration_workflows(results: TestResults):
         
         # Test 1-input workflow
         wrapper1 = EM43Wrapper(task_id=6, config_overrides=quick_config)  # Add 1 task
-        wrapper1.train(verbose=False, save_genome=False)
+        wrapper1.train(verbose=False, save_genome=False, checkpoint_callback=None, checkpoint_interval=0)
         eval_results1 = wrapper1.evaluate(verbose=False, plot=False)
         infer_results1 = wrapper1.infer([1, 2, 3], verbose=False)
         
@@ -1016,7 +1032,7 @@ def test_integration_workflows(results: TestResults):
         
         # Test 2-input workflow
         wrapper2 = EM43Wrapper(task_id=20, config_overrides=quick_config)  # Summation task
-        wrapper2.train(verbose=False, save_genome=False)
+        wrapper2.train(verbose=False, save_genome=False, checkpoint_callback=None, checkpoint_interval=0)
         eval_results2 = wrapper2.evaluate(verbose=False, plot=False)
         infer_results2 = wrapper2.infer(([1, 2], [3, 4]), verbose=False)
         
@@ -1070,7 +1086,7 @@ def test_integration_workflows(results: TestResults):
         
         # Test invalid input formats
         trained_wrapper = EM43Wrapper(task_id=1, config_overrides=quick_config)
-        trained_wrapper.train(verbose=False, save_genome=False)
+        trained_wrapper.train(verbose=False, save_genome=False, checkpoint_callback=None, checkpoint_interval=0)
         
         try:
             # Wrong input format for 1-input mode
