@@ -10,3 +10,6 @@ outputs/*.png
 setup_*.yaml
 best_genome.pkl
 plots/*.png
+
+# logger - user configuration (contains sensitive user data)
+em43_python_refactored/logger/user_config.json
