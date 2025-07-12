@@ -12,6 +12,13 @@ This script demonstrates how to use the unified EM43 system for:
 Run this script to see the unified system in action!
 """
 
+import sys
+from pathlib import Path
+
+# Add parent directory to Python path to import EM43 modules
+parent_dir = Path(__file__).parent.parent
+sys.path.insert(0, str(parent_dir))
+
 from em43_wrapper import EM43Wrapper
 
 def example_1input_task():

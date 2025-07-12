@@ -20,6 +20,7 @@ accidental data injection into the database during testing.
 import os
 import pickle
 import time
+import sys
 from pathlib import Path
 from typing import Dict, Any, Tuple
 import warnings
@@ -28,15 +29,19 @@ import warnings
 import numpy as np
 import yaml
 
-# Ensure imports resolve when executed from project root.
+# Ensure imports resolve when executed from tests subdirectory.
 # ---------------------------------------------------------------------------
-# Switch CWD to the package root so that relative paths (e.g. config.yaml,
-# dp_checkpoints/) remain valid no matter where the test suite is invoked from.
+# Add parent directory to Python path to import EM43 modules
+# Keep ROOT_DIR for other uses (config paths, etc.)
 # ---------------------------------------------------------------------------
 ROOT_DIR = Path(__file__).resolve().parent.parent
+if str(ROOT_DIR) not in sys.path:
+    sys.path.insert(0, str(ROOT_DIR))
+
+# Change to the root directory for file operations (config.yaml, dp_checkpoints/, etc.)
 os.chdir(ROOT_DIR)
 
-# Import EM43 components (now that ROOT_DIR is on sys.path implicitly).
+# Import EM43 components (now that ROOT_DIR is on sys.path)
 from em43_ga import EM43GA, train_model
 from tasks_config import get_dataset, TASKS, custom_task
 from em43_numba import (
